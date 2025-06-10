@@ -134,3 +134,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Keys
+admin-key.json
+session-key.json

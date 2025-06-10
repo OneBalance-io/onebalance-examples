@@ -1,0 +1,23 @@
+{
+  "name": "onebalance-calldata-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "calldata": "ts-node index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.9.0",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "viem": "^2.30.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.3"
+  }
+}
