@@ -136,5 +136,7 @@ dist
 .pnp.*
 
 # Keys
-admin-key.json
-session-key.json
+*-key.json
+helpers/keys/
+
+context/
