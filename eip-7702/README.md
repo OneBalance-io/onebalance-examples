@@ -1,156 +1,64 @@
-# EIP-7702 Atomic Cross-Chain Example
+# EIP-7702 USDC Transfer Example
 
-This example demonstrates atomic cross-chain execution using EIP-7702 delegation with OneBalance.
+Demonstrates atomic cross-chain USDC transfer using EIP-7702 delegation with OneBalance.
 
 ## What is EIP-7702?
 
-EIP-7702 enables EOAs (Externally Owned Accounts) to gain smart account capabilities through delegation. This allows atomic bundling of delegation, cross-chain bridging, and contract execution into a single user operation.
+EIP-7702 enables EOAs to gain smart account capabilities through delegation. Your wallet address stays the same while gaining features like gas abstraction and atomic cross-chain execution.
 
-### Key Benefits
+**Key Benefits:**
 
-- **No address prediction needed** - EOA addresses remain unchanged
-- **Atomic execution** - delegation + bridging + execution in one transaction  
-- **No intermediate states** - eliminates stuck funds scenarios
-
-## How This Example Works
-
-The example performs an atomic USDC transfer that:
-
-1. **Prepares** a call quote with OneBalance
-2. **Signs** EIP-7702 delegation objects (if needed)
-3. **Fetches** an executable quote with signed delegations
-4. **Executes** the atomic operation (delegation + bridge + transfer)
-
-## Prerequisites
-
-- USDC balance on any supported chain
-- The example will automatically generate an EOA address and cache the keys in `helpers/keys/`
+- ✅ No address changes - use your existing EOA
+- ✅ Atomic execution - delegation + bridging + contract calls in one transaction
+- ✅ Gas abstraction - sponsored transactions
 
 ## Running the Example
 
-From the root directory:
-
 ```bash
-# Install dependencies (run once)
+# From root directory
 pnpm install
-
-# Run the EIP-7702 example
 pnpm run eip-7702
 ```
 
-## Expected Output
+**Prerequisites:**
 
-```
-🚀 Starting EIP-7702 Atomic Cross-Chain Example
-Session EOA Address: 0x...
-EIP-7702 Account Configuration: { type: 'kernel-v3.3-ecdsa', deploymentType: 'EIP7702', ... }
+- USDC balance on any supported chain (example generates EOA keys automatically)
 
-Checking USDC balances...
-USDC Balances found: { total: '1000000', chains: [...] }
+## What It Does
 
-=== Starting EIP-7702 Atomic Transfer ===
+1. **Generates/loads** an EOA key (cached in `helpers/keys/`)
+2. **Checks** USDC balances across chains
+3. **Prepares** a 1 USDC transfer quote
+4. **Signs** EIP-7702 delegation (if needed) and UserOperation
+5. **Executes** the atomic transfer
+6. **Monitors** transaction completion
 
-1. Preparing call quote...
-Quote prepared successfully
+## Key Code Concepts
 
-2. Signing delegation and operation...
-Signing delegation for chain 42161...
-Delegation signed successfully
-Operation signed successfully
-
-3. Fetching executable quote...
-Executable quote received: quote_xyz...
-
-4. Executing atomic operation...
-✅ Bundle executed successfully!
-Atomic operation completed: {
-  delegation: 'Completed atomically',
-  bridging: 'Completed atomically',
-  execution: 'Completed atomically'
-}
-
-5. Monitoring transaction completion...
-Transaction status: COMPLETED
-🎉 Transaction completed successfully!
-
-✅ EIP-7702 example completed successfully!
-```
-
-## Key Features Demonstrated
-
-### 1. No Address Prediction
-Unlike regular calldata examples, EIP-7702 uses the same address for both signer and account:
+### EIP-7702 Account Configuration
 
 ```typescript
 const account: EvmAccount = {
   type: 'kernel-v3.3-ecdsa',
   deploymentType: 'EIP7702',
-  accountAddress: sessionKey.address, // EOA address
-  signerAddress: sessionKey.address,  // Same address!
+  accountAddress: eoaAddress,  // Same as EOA
+  signerAddress: eoaAddress,   // No prediction needed
 };
 ```
 
-### 2. Delegation Signing
-Signs EIP-7702 authorization tuples using `signAuthorization`:
+### Unified Signing
 
-```typescript
-const authTuple = {
-  contractAddress: operation.delegation.contractAddress,
-  nonce: operation.delegation.nonce,
-  chainId: chainId,
-};
+Uses `signOperation()` from helpers that handles both delegation and UserOperation signing for Kernel V3.3 accounts.
 
-const signedTuple = await signerAccount.signAuthorization(authTuple);
-```
+### Real-time Monitoring
 
-### 3. Atomic Execution
-All operations bundled in a single transaction - no intermediate states.
+Monitors execution status using `/api/status/get-execution-status` endpoint with live status updates.
 
-## File Structure
+## Atomic Execution Constraint
 
-```
-eip-7702/
-├── index.ts           # Main example implementation
-└── README.md          # This file
+Works when you have assets on **destination chain + ≤1 additional source chain**. For multi-chain scenarios, requires manual delegation workaround.
 
-# Shared configuration in root:
-# - package.json (dependencies and scripts)
-# - tsconfig.json (TypeScript configuration)
-```
+## Files
 
-## Common Issues
-
-1. **No USDC balance**: Add USDC to the generated EOA address
-2. **Delegation errors**: Ensure you have the latest viem version (2.21+)
-3. **Network issues**: Check your internet connection for API calls
-
-## Atomic Execution Constraints
-
-- Works with destination chain + ≤1 additional source chain
-- For complex multi-chain scenarios (>1 additional source), falls back to 3-step manual flow
-
-## Related Documentation
-
-- [EIP-7702 Overview](../context/7702/overview.mdx)
-- [Implementation Details](../context/7702/implementation.mdx)
-- [OneBalance API Documentation](https://docs.onebalance.io)
-
-## TODO
-
-✅ What's Working:
-
-- Signature is valid locally - Both for sender and signer addresses
-- Delegation signature format - Matches Linear ticket TOOLKIT-702 exactly
-- In-place modifications - Confirmed necessary for tamper-proof signature
-- Data structures - Match API documentation and Linear ticket examples
-
-❌ The Core Issue:
-
-The API returns "Invalid sender signature" despite the signature being cryptographically valid. This suggests a backend validation issue.
-
-🔬 Evidence Gathered:
-
-- When we remove the delegation, we get "Invalid tamper proof signature" instead
-- The signature validates correctly using viem's verifyTypedData
-- The account configuration matches what's documented for EIP-7702
-- All data formats match the Linear ticket examples
+- `index.ts` - Main example implementation
+- `../helpers/` - Shared OneBalance API functions and types
