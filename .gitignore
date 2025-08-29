@@ -137,6 +137,7 @@ dist
 
 # Keys
 *-key.json
-helpers/keys/
+helpers/keys/admin-key.json
+helpers/keys/session-key.json
 
 context/
