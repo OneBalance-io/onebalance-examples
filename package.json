@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "calldata": "ts-node onebalance-calldata/index.ts",
+    "eip-7702": "ts-node eip-7702/index.ts",
     "build": "tsc",
     "clean": "rm -rf dist"
   },

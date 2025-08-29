@@ -10,6 +10,9 @@ pnpm install
 
 # Run the calldata example
 pnpm calldata
+
+# Run the EIP-7702 example
+pnpm eip-7702
 ```
 
 ## 📋 Table of Contents
@@ -46,6 +49,30 @@ Complete example demonstrating:
 # Run the calldata example
 pnpm calldata
 ```
+
+### EIP-7702 Example (`eip-7702/`)
+
+Atomic cross-chain execution using EIP-7702 delegation:
+- **No address prediction needed** - EOA addresses remain unchanged
+- **Atomic delegation** - Delegate EOA to smart account capabilities
+- **4-step process**: Prepare → Sign → Quote → Execute atomically
+- **Zero intermediate states** - Everything happens in one transaction
+
+```bash
+# Run the EIP-7702 example
+pnpm eip-7702
+```
+
+### Shared Helpers (`helpers/`)
+
+Reusable utilities for all examples:
+- **API helpers** - OneBalance API communication and authentication
+- **Crypto helpers** - Key generation, caching, and signing utilities  
+- **Type definitions** - Complete TypeScript interfaces for all operations
+- **OneBalance helpers** - High-level functions for common operations
+- **Centralized keys** - All examples use shared keys stored in `helpers/keys/`
+
+**Note:** Keys are automatically generated and cached in `helpers/keys/` directory. Both `session` and `admin` keys are shared across all examples for consistency.
 
 ## 🔧 Configuration
 
