@@ -12,6 +12,8 @@ export {
   fetchTransactionHistory,
   fetchBalances,
   fetchUSDCBalance,
+  fetchExecutionStatus,
+  monitorTransactionCompletion,
   signOperation,
 } from './onebalance';
 

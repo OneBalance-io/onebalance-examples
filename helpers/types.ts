@@ -7,6 +7,13 @@ export enum DelegationSignatureType {
   Unsigned = 'Unsigned',
 }
 
+export enum ContractAccountType {
+  RoleBased = 'role-based',
+  KernelV31 = 'kernel-v3.1-ecdsa',
+  KernelV33 = 'kernel-v3.3-ecdsa',
+  Solana = 'solana',
+}
+
 export interface EvmAccount {
   type: 'kernel-v3.3-ecdsa';
   deploymentType: 'EIP7702';
@@ -203,4 +210,11 @@ export interface HistoryTransaction {
 export interface HistoryResponse {
   transactions: HistoryTransaction[];
   continuation?: string;
+}
+
+export interface ExecutionStatusResponse {
+  id: string;
+  status: OperationStatus;
+  createdAt: string;
+  updatedAt: string;
 }
