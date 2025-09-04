@@ -13,10 +13,11 @@ import {
   SerializedUserOperation,
 } from './types';
 import { apiPost, apiGet } from './api';
-import { signTypedData } from './crypto';
-import { Address, PrivateKeyAccount } from 'viem';
+import { PrivateKeyAccount } from 'viem';
 import { entryPoint07Address, getUserOperationHash, UserOperation } from 'viem/account-abstraction';
 import { privateKeyToAccount } from 'viem/accounts';
+import { MessageV0, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import bs58 from 'bs58';
 
 // OneBalance API methods
 export async function prepareCallQuote(quoteRequest: PrepareCallRequest): Promise<TargetCallQuote> {
@@ -29,6 +30,16 @@ export async function fetchCallQuote(callRequest: CallRequest): Promise<Quote> {
 
 export async function executeQuote(quote: Quote): Promise<BundleResponse> {
   return apiPost<Quote, BundleResponse>('/api/quotes/execute-quote', quote);
+}
+
+// V3 quote endpoint that supports Solana and multi-account operations
+export async function getQuoteV3(quoteRequest: any): Promise<any> {
+  return apiPost<any, any>('/api/v3/quote', quoteRequest);
+}
+
+// V3 execute quote endpoint that supports Solana and multi-account operations
+export async function executeQuoteV3(signedQuote: any): Promise<any> {
+  return apiPost<any, any>('/api/v3/quote/execute-quote', signedQuote);
 }
 
 export async function fetchTransactionHistory(address: string): Promise<HistoryResponse> {
@@ -63,6 +74,48 @@ export async function fetchBalances(address: string) {
       };
     }
   >('/api/v2/balances/aggregated-balance', { address });
+  return response;
+}
+
+// V3 aggregated balance that supports Solana accounts
+export async function fetchAggregatedBalanceV3(
+  account: string,
+  aggregatedAssetId?: string,
+  assetId?: string
+) {
+  const params: any = { account };
+  
+  if (aggregatedAssetId) {
+    params.aggregatedAssetId = aggregatedAssetId;
+  }
+  
+  if (assetId) {
+    params.assetId = assetId;
+  }
+
+  const response = await apiGet<
+    typeof params,
+    {
+      balanceByAggregatedAsset: {
+        aggregatedAssetId: string;
+        balance: string;
+        individualAssetBalances: { 
+          assetType: string; 
+          balance: string; 
+          fiatValue: number 
+        }[];
+        fiatValue: number;
+      }[];
+      balanceBySpecificAsset: {
+        assetType: string;
+        balance: string;
+        fiatValue: number;
+      }[];
+      totalBalance: {
+        fiatValue: number;
+      };
+    }
+  >('/api/v3/balances/aggregated-balance', params);
   return response;
 }
 
@@ -134,6 +187,40 @@ function deserializeUserOp(userOp: SerializedUserOperation): UserOperation<'0.7'
     paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit ? BigInt(userOp.paymasterPostOpGasLimit) : undefined,
     paymasterData: userOp.paymasterData,
     signature: userOp.signature,
+  };
+}
+
+/**
+ * Signs a Solana chain operation with a private key (v3 compatible)
+ *
+ * @param accountAddress - The address of the account to sign the chain operation
+ * @param privateKey - The private key to sign the chain operation
+ * @param chainOp - The chain operation to sign
+ * @returns The signed chain operation
+ */
+export function signSolanaOperation(
+  accountAddress: string,
+  privateKey: string,
+  chainOp: any,
+): any {
+  const msgBuffer = Buffer.from(chainOp.dataToSign, 'base64');
+
+  const message = MessageV0.deserialize(msgBuffer);
+
+  const transaction = new VersionedTransaction(message);
+
+  const decodedKey = bs58.decode(privateKey);
+  transaction.sign([
+    {
+      publicKey: new PublicKey(accountAddress),
+      secretKey: Buffer.from(decodedKey),
+    },
+  ]);
+
+  const signature = bs58.encode(Buffer.from(transaction.signatures[transaction.signatures.length - 1]));
+  return {
+    ...chainOp,
+    signature,
   };
 }
 
