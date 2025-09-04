@@ -6,6 +6,7 @@
   "scripts": {
     "calldata": "ts-node onebalance-calldata/index.ts",
     "eip-7702": "ts-node eip-7702/index.ts",
+    "solana-swap": "ts-node solana/swap.ts",
     "build": "tsc",
     "clean": "rm -rf dist"
   },
@@ -14,7 +15,9 @@
   "license": "ISC",
   "packageManager": "pnpm@10.9.0",
   "dependencies": {
+    "@solana/web3.js": "^1.98.4",
     "axios": "^1.9.0",
+    "bs58": "^6.0.0",
     "viem": "^2.30.5"
   },
   "devDependencies": {
