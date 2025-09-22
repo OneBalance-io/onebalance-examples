@@ -1,15 +1,18 @@
 import axios, { AxiosResponse } from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const BASE_URL = 'https://be.onebalance.io';
 
 // Note: Using the production API endpoint will produce a different predicted address
-const PUBLIC_API_KEY = '42bb629272001ee1163ca0dbbbc07bcbb0ef57a57baf16c4b1d4672db4562c11';
-const PUBLIC_API_KEY2 = 'f9703eaqsbma20tmtphg2jirm0hk8z8v2hkodrfrvhfm6ziesi7p38u991bnih5f';
+const API_KEY = process.env.ONEBALANCE_API_KEY || '42bb629272001ee1163ca0dbbbc07bcbb0ef57a57baf16c4b1d4672db4562c11';
 
 // Helper function to create authenticated headers
 export function createAuthHeaders(): Record<string, string> {
   return {
-    'x-api-key': PUBLIC_API_KEY,
+    'x-api-key': API_KEY,
   };
 }
 

@@ -140,4 +140,4 @@ dist
 helpers/keys/admin-key.json
 helpers/keys/session-key.json
 
-context/
+.context/

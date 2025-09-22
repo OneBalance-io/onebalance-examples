@@ -41,7 +41,7 @@ The script generates these files on first run:
 - ✅ **Cross-Chain Balance Queries** - Unified balance across multiple chains
 - ✅ **ERC20 Token Transfers** - Execute transfers using OneBalance infrastructure
 - ✅ **Transaction Monitoring** - Real-time status tracking
-- ✅ **Error Handling** - Comprehensive error management and retries
+- ✅ **Error Handling** - Error management and retries
 
 ## 🚨 Important Notes
 

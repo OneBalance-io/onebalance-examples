@@ -20,6 +20,18 @@ import { MessageV0, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 // OneBalance API methods
+export async function predictAddress(sessionAddress: string, adminAddress: string): Promise<string> {
+  const response = await apiPost<
+    { sessionAddress: string; adminAddress: string }, 
+    { predictedAddress: string }
+  >('/api/account/predict-address', {
+    sessionAddress,
+    adminAddress,
+  });
+
+  return response.predictedAddress;
+}
+
 export async function prepareCallQuote(quoteRequest: PrepareCallRequest): Promise<TargetCallQuote> {
   return apiPost<PrepareCallRequest, TargetCallQuote>('/api/quotes/prepare-call-quote', quoteRequest);
 }
