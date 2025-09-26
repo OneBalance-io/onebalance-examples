@@ -7,6 +7,7 @@ export { generateEOAKey, readOrCacheEOAKey, signTypedData, generateSolanaKey, lo
 // OneBalance helpers
 export {
   predictAddress,
+  predictBasicAddress,
   prepareCallQuote,
   fetchCallQuote,
   executeQuote,

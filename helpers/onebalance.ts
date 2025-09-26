@@ -22,11 +22,23 @@ import bs58 from 'bs58';
 // OneBalance API methods
 export async function predictAddress(sessionAddress: string, adminAddress: string): Promise<string> {
   const response = await apiPost<
-    { sessionAddress: string; adminAddress: string }, 
+    { sessionAddress: string; adminAddress: string },
     { predictedAddress: string }
   >('/api/account/predict-address', {
     sessionAddress,
     adminAddress,
+  });
+
+  return response.predictedAddress;
+}
+
+export async function predictBasicAddress(type: string, signerAddress: string): Promise<string> {
+  const response = await apiPost<
+    { type: string; signerAddress: string },
+    { predictedAddress: string }
+  >('/api/account/predict-address', {
+    type,
+    signerAddress,
   });
 
   return response.predictedAddress;
