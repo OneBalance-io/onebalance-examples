@@ -3,11 +3,12 @@ import { join } from 'node:path';
 import { HashTypedDataParameters } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { Keypair } from '@solana/web3.js';
+import { EOAKeyPair, SolanaKeyPair } from './types';
 
 export type Hex = `0x${string}`;
 
 // Generate session key pair
-export function generateEOAKey() {
+export function generateEOAKey(): EOAKeyPair {
   const privateKey = generatePrivateKey();
   const account = privateKeyToAccount(privateKey);
 
@@ -17,11 +18,11 @@ export function generateEOAKey() {
   };
 }
 
-export function readOrCacheEOAKey(key: string) {
+export function readOrCacheEOAKey(key: string): EOAKeyPair {
   // Always use the centralized keys directory in helpers/keys/
   const keysDir = join(__dirname, 'keys');
   const keyPath = join(keysDir, `${key}-key.json`);
-  
+
   // Ensure keys directory exists
   if (!existsSync(keysDir)) {
     mkdirSync(keysDir, { recursive: true });
@@ -39,27 +40,30 @@ export function readOrCacheEOAKey(key: string) {
 }
 
 // Helper to sign typed data operations
-export async function signTypedData(typedData: HashTypedDataParameters, privateKey: Hex): Promise<Hex> {
+export async function signTypedData(
+  typedData: HashTypedDataParameters,
+  privateKey: Hex,
+): Promise<Hex> {
   const account = privateKeyToAccount(privateKey);
   return await account.signTypedData(typedData);
 }
 
 // Generate or read cached Solana keypair
-export function generateSolanaKey() {
+export function generateSolanaKey(): SolanaKeyPair {
   const keypair = Keypair.generate();
   return {
     keypair,
     publicKey: keypair.publicKey.toString(),
-    secretKey: Array.from(keypair.secretKey)
+    secretKey: Array.from(keypair.secretKey),
   };
 }
 
 // Load or cache Solana keypair (similar to readOrCacheEOAKey)
-export function loadSolanaKey() {
+export function loadSolanaKey(): SolanaKeyPair {
   // Always use the centralized keys directory in helpers/keys/
   const keysDir = join(__dirname, 'keys');
   const keyPath = join(keysDir, 'solana-key.json');
-  
+
   // Ensure keys directory exists
   if (!existsSync(keysDir)) {
     mkdirSync(keysDir, { recursive: true });
@@ -70,11 +74,11 @@ export function loadSolanaKey() {
       const keyData = JSON.parse(readFileSync(keyPath, 'utf8'));
       // Create keypair from the secretKey array
       const keypair = Keypair.fromSecretKey(new Uint8Array(keyData.secretKey));
-      
+
       return {
         keypair,
         publicKey: keypair.publicKey.toString(),
-        secretKey: keyData.secretKey
+        secretKey: keyData.secretKey,
       };
     } catch (error) {
       console.log('⚠️ Error reading cached Solana key, generating new one...');
@@ -83,10 +87,17 @@ export function loadSolanaKey() {
 
   // Generate new key and cache it
   const keys = generateSolanaKey();
-  writeFileSync(keyPath, JSON.stringify({
-    publicKey: keys.publicKey,
-    secretKey: keys.secretKey
-  }, null, 2));
+  writeFileSync(
+    keyPath,
+    JSON.stringify(
+      {
+        publicKey: keys.publicKey,
+        secretKey: keys.secretKey,
+      },
+      null,
+      2,
+    ),
+  );
 
   return keys;
 }

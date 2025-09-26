@@ -41,7 +41,9 @@ async function transferErc20WithEIP7702(
   console.log(`Transferring 1 USDC from balance: ${largestUsdcBalanceEntry.balance}`);
 
   // Create transfer calldata
-  const transferDefinition = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
+  const transferDefinition = parseAbi([
+    'function transfer(address to, uint256 amount) returns (bool)',
+  ]);
   const transferCallData = encodeFunctionData({
     abi: transferDefinition,
     functionName: 'transfer',
@@ -74,7 +76,7 @@ async function transferErc20WithEIP7702(
   const signedChainOp = await signOperation(
     preparedQuote.chainOperation,
     signerPrivateKey,
-    ContractAccountType.KernelV33  // Use Kernel V3.3 for EIP-7702
+    ContractAccountType.KernelV33, // Use Kernel V3.3 for EIP-7702
   );
   console.log('Operation signed successfully');
 
@@ -95,7 +97,7 @@ async function transferErc20WithEIP7702(
     const signedOriginChainOp = await signOperation(
       quote.originChainsOperations[i],
       signerPrivateKey,
-      ContractAccountType.KernelV33
+      ContractAccountType.KernelV33,
     );
     quote.originChainsOperations[i] = signedOriginChainOp;
   }
@@ -111,7 +113,7 @@ async function transferErc20WithEIP7702(
 
 async function main() {
   console.log('🚀 Starting EIP-7702 USDC Transfer Example');
-  
+
   try {
     // Load or generate EOA key
     const signerKey = readOrCacheEOAKey('session');
@@ -135,10 +137,9 @@ async function main() {
     }
 
     console.log('USDC Balance:', usdcBalances.balance);
-    
+
     await transferErc20WithEIP7702(account, signerKey.privateKey, usdcBalances);
     console.log('✅ Transfer completed successfully!');
-
   } catch (error) {
     console.error('❌ Error:', error);
     process.exit(1);

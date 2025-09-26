@@ -7,7 +7,9 @@ dotenv.config();
 const BASE_URL = 'https://be.onebalance.io';
 
 // Note: Using the production API endpoint will produce a different predicted address
-const API_KEY = process.env.ONEBALANCE_API_KEY || '42bb629272001ee1163ca0dbbbc07bcbb0ef57a57baf16c4b1d4672db4562c11';
+const API_KEY =
+  process.env.ONEBALANCE_API_KEY ||
+  '42bb629272001ee1163ca0dbbbc07bcbb0ef57a57baf16c4b1d4672db4562c11';
 
 // Helper function to create authenticated headers
 export function createAuthHeaders(): Record<string, string> {
@@ -31,7 +33,9 @@ export async function apiRequest<RequestData, ResponseData>(
     const url = `${BASE_URL}${endpoint}`;
 
     const response: AxiosResponse<ResponseData> =
-      method === 'post' ? await axios.post(url, data, config) : await axios.get(url, { ...config, params: data });
+      method === 'post'
+        ? await axios.post(url, data, config)
+        : await axios.get(url, { ...config, params: data });
 
     return response.data;
   } catch (error) {
@@ -43,10 +47,16 @@ export async function apiRequest<RequestData, ResponseData>(
 }
 
 // API methods
-export async function apiPost<RequestData, ResponseData>(endpoint: string, data: RequestData): Promise<ResponseData> {
+export async function apiPost<RequestData, ResponseData>(
+  endpoint: string,
+  data: RequestData,
+): Promise<ResponseData> {
   return apiRequest<RequestData, ResponseData>('post', endpoint, data);
 }
 
-export async function apiGet<RequestData, ResponseData>(endpoint: string, params: RequestData): Promise<ResponseData> {
+export async function apiGet<RequestData, ResponseData>(
+  endpoint: string,
+  params: RequestData,
+): Promise<ResponseData> {
   return apiRequest<RequestData, ResponseData>('get', endpoint, params, true);
 }

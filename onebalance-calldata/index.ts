@@ -30,7 +30,9 @@ async function apiRequest<RequestData, ResponseData>(
     const url = `${BASE_URL}${endpoint}`;
 
     const response: AxiosResponse<ResponseData> =
-      method === 'post' ? await axios.post(url, data, config) : await axios.get(url, { ...config, params: data });
+      method === 'post'
+        ? await axios.post(url, data, config)
+        : await axios.get(url, { ...config, params: data });
 
     return response.data;
   } catch (error) {
@@ -42,11 +44,17 @@ async function apiRequest<RequestData, ResponseData>(
 }
 
 // API methods
-async function apiPost<RequestData, ResponseData>(endpoint: string, data: RequestData): Promise<ResponseData> {
+async function apiPost<RequestData, ResponseData>(
+  endpoint: string,
+  data: RequestData,
+): Promise<ResponseData> {
   return apiRequest<RequestData, ResponseData>('post', endpoint, data);
 }
 
-async function apiGet<RequestData, ResponseData>(endpoint: string, params: RequestData): Promise<ResponseData> {
+async function apiGet<RequestData, ResponseData>(
+  endpoint: string,
+  params: RequestData,
+): Promise<ResponseData> {
   return apiRequest<RequestData, ResponseData>('get', endpoint, params, true);
 }
 
@@ -83,13 +91,13 @@ const adminKey = readOrCacheEOAKey('admin');
 console.log('Admin Address:', adminKey.address);
 
 async function predictAddress(sessionAddress: string, adminAddress: string): Promise<string> {
-  const response = await apiPost<{ sessionAddress: string; adminAddress: string }, { predictedAddress: string }>(
-    '/api/account/predict-address',
-    {
-      sessionAddress,
-      adminAddress,
-    },
-  );
+  const response = await apiPost<
+    { sessionAddress: string; adminAddress: string },
+    { predictedAddress: string }
+  >('/api/account/predict-address', {
+    sessionAddress,
+    adminAddress,
+  });
 
   return response.predictedAddress;
 }
@@ -101,10 +109,10 @@ async function fetchBalances(address: string) {
       balanceByAggregatedAsset: {
         aggregatedAssetId: string;
         balance: string;
-        individualAssetBalances: { 
-          assetType: string; 
-          balance: string; 
-          fiatValue: number 
+        individualAssetBalances: {
+          assetType: string;
+          balance: string;
+          fiatValue: number;
         }[];
         fiatValue: number;
       }[];
@@ -311,7 +319,10 @@ interface HistoryResponse {
 }
 
 async function prepareCallQuote(quoteRequest: PrepareCallRequest): Promise<TargetCallQuote> {
-  return apiPost<PrepareCallRequest, TargetCallQuote>('/api/quotes/prepare-call-quote', quoteRequest);
+  return apiPost<PrepareCallRequest, TargetCallQuote>(
+    '/api/quotes/prepare-call-quote',
+    quoteRequest,
+  );
 }
 
 async function fetchCallQuote(callRequest: CallRequest): Promise<Quote> {
@@ -323,17 +334,23 @@ async function executeQuote(quote: Quote): Promise<BundleResponse> {
 }
 
 async function fetchTransactionHistory(address: string): Promise<HistoryResponse> {
-  return apiGet<{ user: string; limit: number; sortBy: string }, HistoryResponse>('/api/status/get-tx-history', {
-    user: address,
-    limit: 1,
-    sortBy: 'createdAt',
-  });
+  return apiGet<{ user: string; limit: number; sortBy: string }, HistoryResponse>(
+    '/api/status/get-tx-history',
+    {
+      user: address,
+      limit: 1,
+      sortBy: 'createdAt',
+    },
+  );
 }
 
 async function signOperation(operation: ChainOperation, key: Hex): Promise<ChainOperation> {
   return {
     ...operation,
-    userOp: { ...operation.userOp, signature: await privateKeyToAccount(key).signTypedData(operation.typedDataToSign) },
+    userOp: {
+      ...operation.userOp,
+      signature: await privateKeyToAccount(key).signTypedData(operation.typedDataToSign),
+    },
   };
 }
 
@@ -358,7 +375,9 @@ async function transferErc20OnChain(
     throw new Error('No USDC balance found');
   }
 
-  const transferDefinition = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
+  const transferDefinition = parseAbi([
+    'function transfer(address to, uint256 amount) returns (bool)',
+  ]);
 
   const transferCallData = encodeFunctionData({
     abi: transferDefinition,
@@ -405,7 +424,10 @@ async function transferErc20OnChain(
   const quote = await fetchCallQuote(callRequest);
 
   for (let i = 0; i < quote.originChainsOperations.length; i++) {
-    const callQuoteSignedChainOperation = await signOperation(quote.originChainsOperations[i], sessionKey.privateKey);
+    const callQuoteSignedChainOperation = await signOperation(
+      quote.originChainsOperations[i],
+      sessionKey.privateKey,
+    );
     quote.originChainsOperations[i] = callQuoteSignedChainOperation;
   }
 
