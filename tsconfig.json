@@ -20,18 +20,10 @@
     "typeRoots": ["./node_modules/@types"],
     "types": ["node"]
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ],
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
   "ts-node": {
     "esm": false,
     "experimentalSpecifierResolution": "node"
   }
-} 
+}

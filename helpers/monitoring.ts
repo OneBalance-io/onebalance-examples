@@ -7,24 +7,24 @@ import { Quote, QuoteResponseV1, QuoteResponseV3, ExecutionStatusResponse } from
 
 /**
  * Monitor transaction completion status with polling
- * 
+ *
  * @param quote - The quote to monitor (contains the quote ID)
  * @param timeout - Maximum time to wait in milliseconds (default: 60 seconds)
  * @param pollInterval - Time between status checks in milliseconds (default: 2 seconds)
  * @returns Promise that resolves when transaction completes or rejects on failure/timeout
  */
 export async function monitorTransactionCompletion(
-  quote: Quote | QuoteResponseV1 | QuoteResponseV3, 
-  timeout: number = 60_000, 
-  pollInterval: number = 2_000
+  quote: Quote | QuoteResponseV1 | QuoteResponseV3,
+  timeout: number = 60_000,
+  pollInterval: number = 2_000,
 ): Promise<void> {
   console.log('\n🔍 Monitoring transaction completion...');
   console.log('Quote ID:', quote.id);
-  
+
   const startTime = Date.now();
   let completed = false;
 
-  while (!completed && (Date.now() - startTime < timeout)) {
+  while (!completed && Date.now() - startTime < timeout) {
     try {
       const executionStatus = await fetchExecutionStatus(quote.id);
       console.log(`📊 Current status: ${executionStatus.status}`);
@@ -55,7 +55,7 @@ export async function monitorTransactionCompletion(
 
 /**
  * Monitor multiple transactions concurrently
- * 
+ *
  * @param quotes - Array of quotes to monitor
  * @param timeout - Maximum time to wait for each transaction
  * @param pollInterval - Time between status checks
@@ -64,17 +64,17 @@ export async function monitorTransactionCompletion(
 export async function monitorMultipleTransactions(
   quotes: Array<Quote | QuoteResponseV1 | QuoteResponseV3>,
   timeout: number = 60_000,
-  pollInterval: number = 2_000
+  pollInterval: number = 2_000,
 ): Promise<void> {
   console.log(`\n🔍 Monitoring ${quotes.length} transactions...`);
-  
-  const monitoringPromises = quotes.map((quote, index) => 
+
+  const monitoringPromises = quotes.map((quote, index) =>
     monitorTransactionCompletion(quote, timeout, pollInterval)
       .then(() => console.log(`✅ Transaction ${index + 1} completed`))
-      .catch(error => {
+      .catch((error) => {
         console.error(`❌ Transaction ${index + 1} failed:`, error.message);
         throw error;
-      })
+      }),
   );
 
   await Promise.all(monitoringPromises);
@@ -83,7 +83,7 @@ export async function monitorMultipleTransactions(
 
 /**
  * Get current status of a transaction without monitoring
- * 
+ *
  * @param quoteId - The quote ID to check
  * @returns Promise with the current execution status
  */
@@ -100,7 +100,7 @@ export async function getTransactionStatus(quoteId: string): Promise<ExecutionSt
 
 /**
  * Wait for transaction with custom retry logic
- * 
+ *
  * @param quote - The quote to monitor
  * @param options - Monitoring options
  * @returns Promise that resolves when transaction completes
@@ -112,17 +112,12 @@ export async function waitForTransaction(
     pollInterval?: number;
     maxRetries?: number;
     onStatusUpdate?: (status: string) => void;
-  }
+  },
 ): Promise<void> {
-  const {
-    timeout = 60_000,
-    pollInterval = 2_000,
-    maxRetries = 3,
-    onStatusUpdate
-  } = options || {};
+  const { timeout = 60_000, pollInterval = 2_000, maxRetries = 3, onStatusUpdate } = options || {};
 
   let retries = 0;
-  
+
   while (retries < maxRetries) {
     try {
       await monitorTransactionCompletion(quote, timeout, pollInterval);
@@ -130,13 +125,13 @@ export async function waitForTransaction(
     } catch (error) {
       retries++;
       console.log(`⚠️ Monitoring attempt ${retries} failed:`, (error as Error).message);
-      
+
       if (retries >= maxRetries) {
         throw new Error(`Failed to monitor transaction after ${maxRetries} attempts`);
       }
-      
+
       console.log(`🔄 Retrying in ${pollInterval / 1000} seconds...`);
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
   }
 }

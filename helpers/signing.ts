@@ -3,16 +3,16 @@ import { entryPoint07Address, getUserOperationHash, UserOperation } from 'viem/a
 import { privateKeyToAccount } from 'viem/accounts';
 import { MessageV0, PublicKey, VersionedTransaction, Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
-import { 
-  Hex, 
-  ContractAccountType, 
+import {
+  Hex,
+  ContractAccountType,
   DelegationSignatureType,
   SerializedUserOperation,
   ChainOperation,
   SolanaOperation,
   QuoteResponseV3,
   EOAKeyPair,
-  SolanaAccount
+  SolanaAccount,
 } from './types';
 
 /**
@@ -34,7 +34,9 @@ function deserializeUserOp(userOp: SerializedUserOperation): UserOperation<'0.7'
     paymasterVerificationGasLimit: userOp.paymasterVerificationGasLimit
       ? BigInt(userOp.paymasterVerificationGasLimit)
       : undefined,
-    paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit ? BigInt(userOp.paymasterPostOpGasLimit) : undefined,
+    paymasterPostOpGasLimit: userOp.paymasterPostOpGasLimit
+      ? BigInt(userOp.paymasterPostOpGasLimit)
+      : undefined,
     paymasterData: userOp.paymasterData,
     signature: userOp.signature,
   };
@@ -56,7 +58,7 @@ export function signSolanaOperation(
   if (!chainOp.dataToSign) {
     throw new Error('dataToSign is required for Solana operation signing');
   }
-  
+
   const msgBuffer = Buffer.from(chainOp.dataToSign, 'base64');
 
   const message = MessageV0.deserialize(msgBuffer);
@@ -71,7 +73,9 @@ export function signSolanaOperation(
     },
   ]);
 
-  const signature = bs58.encode(Buffer.from(transaction.signatures[transaction.signatures.length - 1]));
+  const signature = bs58.encode(
+    Buffer.from(transaction.signatures[transaction.signatures.length - 1]),
+  );
   return {
     ...chainOp,
     signature,
@@ -90,7 +94,10 @@ export async function signOperation(
 ): Promise<ChainOperation> {
   const signerAccount = typeof key === 'string' ? privateKeyToAccount(key) : key;
 
-  if (accountType === ContractAccountType.KernelV31 || accountType === ContractAccountType.KernelV33) {
+  if (
+    accountType === ContractAccountType.KernelV31 ||
+    accountType === ContractAccountType.KernelV33
+  ) {
     if (!operation.userOp || !operation.typedDataToSign?.domain?.chainId) {
       throw new Error('UserOperation and Chain ID are required for Kernel signing.');
     }
@@ -130,33 +137,33 @@ export async function signOperation(
       entryPointVersion: '0.7',
       chainId: chainId,
     });
-    
+
     return {
       ...operation,
-      userOp: { 
-        ...operation.userOp, 
-        signature: await signerAccount.signMessage({ message: { raw: userOpHash } }) 
+      userOp: {
+        ...operation.userOp,
+        signature: await signerAccount.signMessage({ message: { raw: userOpHash } }),
       },
     };
   }
-  
+
   // For role-based accounts, sign typed data
   if (!operation.typedDataToSign) {
     throw new Error('TypedData is required for role-based account signing.');
   }
-  
+
   return {
     ...operation,
-    userOp: { 
-      ...operation.userOp, 
-      signature: await signerAccount.signTypedData(operation.typedDataToSign) 
+    userOp: {
+      ...operation.userOp,
+      signature: await signerAccount.signTypedData(operation.typedDataToSign),
     },
   };
 }
 
 /**
  * Signs all operations in a quote (EVM and Solana)
- * 
+ *
  * @param quote - The quote containing operations to sign
  * @param signerKey - EVM signer key for signing EVM operations
  * @param solanaKeypair - Solana keypair for signing Solana operations
@@ -164,23 +171,23 @@ export async function signOperation(
  * @returns The quote with all operations signed
  */
 export async function signAllOperations(
-  quote: QuoteResponseV3, 
-  signerKey: EOAKeyPair, 
-  solanaKeypair: Keypair | null, 
-  solanaAccount: SolanaAccount | null
+  quote: QuoteResponseV3,
+  signerKey: EOAKeyPair,
+  solanaKeypair: Keypair | null,
+  solanaAccount: SolanaAccount | null,
 ): Promise<QuoteResponseV3> {
   console.log('🔐 Signing operations...');
-  
+
   for (let i = 0; i < quote.originChainsOperations.length; i++) {
     const operation = quote.originChainsOperations[i];
-    
+
     if ('type' in operation && operation.type === 'solana' && solanaKeypair && solanaAccount) {
       // Sign Solana operation
       const privateKeyString = bs58.encode(solanaKeypair.secretKey);
       const signedOperation = signSolanaOperation(
-        solanaAccount.accountAddress, 
-        privateKeyString, 
-        operation as SolanaOperation
+        solanaAccount.accountAddress,
+        privateKeyString,
+        operation as SolanaOperation,
       );
       quote.originChainsOperations[i] = signedOperation;
     } else if ('userOp' in operation && 'typedDataToSign' in operation) {
@@ -188,12 +195,12 @@ export async function signAllOperations(
       const signedOperation = await signOperation(
         operation,
         signerKey.privateKey,
-        ContractAccountType.KernelV31
+        ContractAccountType.KernelV31,
       );
       quote.originChainsOperations[i] = signedOperation;
     }
   }
-  
+
   console.log('✅ All operations signed successfully');
   return quote;
 }

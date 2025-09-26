@@ -4,36 +4,35 @@ import { Account, QuoteRequestV3, SwapParams } from './types';
  * Quote building utilities for OneBalance operations
  */
 
-
 /**
  * Build quote request with proper accounts array for V3 API
- * 
+ *
  * @param swapParams - The swap parameters defining the assets and amount
  * @param accounts - Array of accounts to use for the swap
  * @param options - Additional options for the quote request
  * @returns Formatted quote request object for V3 API
  */
 export function buildQuoteRequest(
-  swapParams: SwapParams, 
-  accounts: Account[], 
+  swapParams: SwapParams,
+  accounts: Account[],
   options?: {
     slippageTolerance?: number;
     recipientAccount?: string;
-  }
+  },
 ): QuoteRequestV3 {
   const quoteRequest: QuoteRequestV3 = {
     from: {
       accounts,
       asset: {
-        assetId: swapParams.fromAssetId
+        assetId: swapParams.fromAssetId,
       },
-      amount: swapParams.amount
+      amount: swapParams.amount,
     },
     to: {
       asset: {
-        assetId: swapParams.toAssetId
-      }
-    }
+        assetId: swapParams.toAssetId,
+      },
+    },
   };
 
   // Add optional parameters if provided
@@ -50,7 +49,7 @@ export function buildQuoteRequest(
 
 /**
  * Build a simple transfer quote request (same asset, different recipient)
- * 
+ *
  * @param assetId - The asset to transfer
  * @param amount - The amount to transfer
  * @param accounts - Array of accounts to use for the transfer
@@ -65,21 +64,17 @@ export function buildTransferRequest(
   recipientAccount: string,
   options?: {
     slippageTolerance?: number;
-  }
+  },
 ): QuoteRequestV3 {
-  return buildQuoteRequest(
-    { fromAssetId: assetId, toAssetId: assetId, amount },
-    accounts,
-    { 
-      recipientAccount,
-      ...options 
-    }
-  );
+  return buildQuoteRequest({ fromAssetId: assetId, toAssetId: assetId, amount }, accounts, {
+    recipientAccount,
+    ...options,
+  });
 }
 
 /**
  * Build quote request for cross-chain operations
- * 
+ *
  * @param swapParams - The swap parameters
  * @param accounts - Array of accounts (typically includes both EVM and Solana)
  * @param options - Additional options
@@ -91,12 +86,12 @@ export function buildCrossChainQuoteRequest(
   options?: {
     slippageTolerance?: number;
     recipientAccount?: string;
-  }
+  },
 ): QuoteRequestV3 {
   // Ensure we have the right account types for cross-chain operations
-  const hasEvm = accounts.some(acc => acc.type === 'kernel-v3.1-ecdsa');
-  const hasSolana = accounts.some(acc => acc.type === 'solana');
-  
+  const hasEvm = accounts.some((acc) => acc.type === 'kernel-v3.1-ecdsa');
+  const hasSolana = accounts.some((acc) => acc.type === 'solana');
+
   if (!hasEvm && !hasSolana) {
     throw new Error('At least one EVM or Solana account required for cross-chain operations');
   }
@@ -106,7 +101,7 @@ export function buildCrossChainQuoteRequest(
 
 /**
  * Validate quote request parameters
- * 
+ *
  * @param quoteRequest - The quote request to validate
  * @throws Error if validation fails
  */

@@ -116,10 +116,12 @@ export interface OriginTokenInfo {
   aggregatedAssetId: string;
   amount: string;
   assetType: string[] | string;
-  fiatValue: Array<{
-    assetType: string;
-    fiatValue: string;
-  }> | string;
+  fiatValue:
+    | Array<{
+        assetType: string;
+        fiatValue: string;
+      }>
+    | string;
 }
 
 export interface DestinationTokenInfo {

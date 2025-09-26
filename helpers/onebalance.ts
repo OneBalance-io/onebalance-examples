@@ -20,18 +20,20 @@ import {
   AggregatedAsset,
   AggregatedAssetBalance,
   SupportedChain,
-  ChainEntity,
 } from './types';
 import { apiPost, apiGet } from './api';
 
 // OneBalance API methods
-export async function predictAddress(sessionAddress: string, adminAddress: string): Promise<string> {
+export async function predictAddress(
+  sessionAddress: string,
+  adminAddress: string,
+): Promise<string> {
   const response = await apiPost<PredictAddressRoleBasedRequest, PredictAddressResponse>(
     '/api/account/predict-address',
     {
       sessionAddress: sessionAddress as Hex,
       adminAddress: adminAddress as Hex,
-    }
+    },
   );
 
   return response.predictedAddress;
@@ -43,14 +45,17 @@ export async function predictBasicAddress(type: string, signerAddress: string): 
     {
       type,
       signerAddress: signerAddress as Hex,
-    }
+    },
   );
 
   return response.predictedAddress;
 }
 
 export async function prepareCallQuote(quoteRequest: PrepareCallRequest): Promise<TargetCallQuote> {
-  return apiPost<PrepareCallRequest, TargetCallQuote>('/api/quotes/prepare-call-quote', quoteRequest);
+  return apiPost<PrepareCallRequest, TargetCallQuote>(
+    '/api/quotes/prepare-call-quote',
+    quoteRequest,
+  );
 }
 
 export async function fetchCallQuote(callRequest: CallRequest): Promise<Quote> {
@@ -76,18 +81,21 @@ export async function executeQuoteV3(signedQuote: QuoteResponseV3): Promise<Bund
 }
 
 export async function fetchTransactionHistory(address: string): Promise<HistoryResponse> {
-  return apiGet<{ user: string; limit: number; sortBy: string }, HistoryResponse>('/api/status/get-tx-history', {
-    user: address,
-    limit: 10,
-    sortBy: 'createdAt',
-  });
+  return apiGet<{ user: string; limit: number; sortBy: string }, HistoryResponse>(
+    '/api/status/get-tx-history',
+    {
+      user: address,
+      limit: 10,
+      sortBy: 'createdAt',
+    },
+  );
 }
 
 export async function fetchBalances(address: string): Promise<AggregatedBalanceResponseV2> {
-  const response = await apiGet<
-    { address: string },
-    AggregatedBalanceResponseV2
-  >('/api/v2/balances/aggregated-balance', { address });
+  const response = await apiGet<{ address: string }, AggregatedBalanceResponseV2>(
+    '/api/v2/balances/aggregated-balance',
+    { address },
+  );
   return response;
 }
 
@@ -95,26 +103,28 @@ export async function fetchBalances(address: string): Promise<AggregatedBalanceR
 export async function fetchAggregatedBalanceV3(
   account: string,
   aggregatedAssetId?: string,
-  assetId?: string
+  assetId?: string,
 ): Promise<AggregatedBalanceResponseV3> {
   const params: AggregatedBalanceRequestV3 = { account };
-  
+
   if (aggregatedAssetId) {
     params.aggregatedAssetId = aggregatedAssetId;
   }
-  
+
   if (assetId) {
     params.assetId = assetId;
   }
 
   const response = await apiGet<AggregatedBalanceRequestV3, AggregatedBalanceResponseV3>(
-    '/api/v3/balances/aggregated-balance', 
-    params
+    '/api/v3/balances/aggregated-balance',
+    params,
   );
   return response;
 }
 
-export async function fetchUSDCBalance(address: string): Promise<AggregatedAssetBalance | undefined> {
+export async function fetchUSDCBalance(
+  address: string,
+): Promise<AggregatedAssetBalance | undefined> {
   const response = await fetchBalances(address);
   return response.balanceByAggregatedAsset.find((asset) => asset.aggregatedAssetId === 'ds:usdc');
 }

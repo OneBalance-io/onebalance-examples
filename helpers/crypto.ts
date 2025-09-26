@@ -22,7 +22,7 @@ export function readOrCacheEOAKey(key: string): EOAKeyPair {
   // Always use the centralized keys directory in helpers/keys/
   const keysDir = join(__dirname, 'keys');
   const keyPath = join(keysDir, `${key}-key.json`);
-  
+
   // Ensure keys directory exists
   if (!existsSync(keysDir)) {
     mkdirSync(keysDir, { recursive: true });
@@ -40,7 +40,10 @@ export function readOrCacheEOAKey(key: string): EOAKeyPair {
 }
 
 // Helper to sign typed data operations
-export async function signTypedData(typedData: HashTypedDataParameters, privateKey: Hex): Promise<Hex> {
+export async function signTypedData(
+  typedData: HashTypedDataParameters,
+  privateKey: Hex,
+): Promise<Hex> {
   const account = privateKeyToAccount(privateKey);
   return await account.signTypedData(typedData);
 }
@@ -51,7 +54,7 @@ export function generateSolanaKey(): SolanaKeyPair {
   return {
     keypair,
     publicKey: keypair.publicKey.toString(),
-    secretKey: Array.from(keypair.secretKey)
+    secretKey: Array.from(keypair.secretKey),
   };
 }
 
@@ -60,7 +63,7 @@ export function loadSolanaKey(): SolanaKeyPair {
   // Always use the centralized keys directory in helpers/keys/
   const keysDir = join(__dirname, 'keys');
   const keyPath = join(keysDir, 'solana-key.json');
-  
+
   // Ensure keys directory exists
   if (!existsSync(keysDir)) {
     mkdirSync(keysDir, { recursive: true });
@@ -71,11 +74,11 @@ export function loadSolanaKey(): SolanaKeyPair {
       const keyData = JSON.parse(readFileSync(keyPath, 'utf8'));
       // Create keypair from the secretKey array
       const keypair = Keypair.fromSecretKey(new Uint8Array(keyData.secretKey));
-      
+
       return {
         keypair,
         publicKey: keypair.publicKey.toString(),
-        secretKey: keyData.secretKey
+        secretKey: keyData.secretKey,
       };
     } catch (error) {
       console.log('⚠️ Error reading cached Solana key, generating new one...');
@@ -84,10 +87,17 @@ export function loadSolanaKey(): SolanaKeyPair {
 
   // Generate new key and cache it
   const keys = generateSolanaKey();
-  writeFileSync(keyPath, JSON.stringify({
-    publicKey: keys.publicKey,
-    secretKey: keys.secretKey
-  }, null, 2));
+  writeFileSync(
+    keyPath,
+    JSON.stringify(
+      {
+        publicKey: keys.publicKey,
+        secretKey: keys.secretKey,
+      },
+      null,
+      2,
+    ),
+  );
 
   return keys;
 }
