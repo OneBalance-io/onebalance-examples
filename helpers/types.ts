@@ -1,4 +1,5 @@
 import { HashTypedDataParameters } from 'viem';
+import { Keypair } from '@solana/web3.js';
 
 export type Hex = `0x${string}`;
 
@@ -14,7 +15,7 @@ export enum ContractAccountType {
   Solana = 'solana',
 }
 
-// OneBalance API Types based on OpenAPI spec
+// OneBalance API Types
 
 // Account Types
 export interface RoleBasedAccount {
@@ -64,18 +65,22 @@ export interface Asset {
   assetId: string;
 }
 
+// Swap operation parameters
+export interface SwapParams {
+  fromAssetId: string;
+  toAssetId: string;
+  amount: string;
+  decimals?: number;
+}
+
+// Aggregated asset information
 export interface AggregatedAsset {
   aggregatedAssetId: string;
   symbol: string;
   name: string;
   decimals: number;
   logoUrl?: string;
-  aggregatedEntities: Array<{
-    assetType: string;
-    decimals: number;
-    name: string;
-    symbol: string;
-  }>;
+  aggregatedEntities: IndividualAsset[];
 }
 
 // Quote Request Types (V1)
@@ -194,37 +199,72 @@ export interface SolanaOperation {
 }
 
 // Balance Types
-export interface AggregatedBalanceResponseV3 {
-  accounts?: {
-    evm?: Hex;
-    solana?: string;
-  };
-  balanceByAggregatedAsset: Array<{
-    aggregatedAssetId: string;
-    balance: string;
-    individualAssetBalances: Array<{
-      assetType: string;
-      balance: string;
-      fiatValue: number;
-    }>;
-    fiatValue: number;
-  }>;
-  balanceBySpecificAsset: Array<{
-    assetType: string;
-    balance: string;
-    fiatValue: number;
-  }>;
-  totalBalance: {
-    fiatValue: number;
-  };
+
+// Individual asset within an aggregated asset
+export interface IndividualAsset {
+  assetType: string;
+  decimals: number;
+  name: string;
+  symbol: string;
 }
 
-// Execution Status Types (updated from OpenAPI spec)
+// Individual asset balance within an aggregated asset
+export interface IndividualAssetBalance {
+  assetType: string;
+  balance: string;
+  fiatValue: number;
+}
+
+// Aggregated asset balance entry
+export interface AggregatedAssetBalance {
+  aggregatedAssetId: string;
+  balance: string;
+  individualAssetBalances: IndividualAssetBalance[];
+  fiatValue: number;
+}
+
+// Specific asset balance entry
+export interface SpecificAssetBalance {
+  assetType: string;
+  balance: string;
+  fiatValue: number;
+}
+
+// Total balance summary
+export interface TotalBalance {
+  fiatValue: number;
+}
+
+// V2 aggregated balance response
+export interface AggregatedBalanceResponseV2 {
+  balanceByAggregatedAsset: AggregatedAssetBalance[];
+  balanceBySpecificAsset: SpecificAssetBalance[];
+  totalBalance: TotalBalance;
+}
+
+// V3 aggregated balance request parameters
+export interface AggregatedBalanceRequestV3 {
+  account: string;
+  aggregatedAssetId?: string;
+  assetId?: string;
+}
+
+// V3 aggregated balance response
+export interface AggregatedBalanceResponseV3 {
+  accounts?: {
+    evm?: string;
+    solana?: string;
+  };
+  balanceByAggregatedAsset: AggregatedAssetBalance[];
+  balanceBySpecificAsset: SpecificAssetBalance[];
+  totalBalance: TotalBalance;
+}
+
+// Operation details for V3 endpoints
 export interface OperationDetailsV3 {
   hash: string;
-  chain?: string;
-  chainId?: number;
-  explorerUrl?: string;
+  chain: string;
+  explorerUrl: string;
 }
 
 export interface ExecutionStatusResponseV3 {
@@ -484,17 +524,21 @@ export interface BundleResponse {
 
 export type TransactionType = 'SWAP' | 'TRANSFER' | 'CALL';
 
+// Operation execution status
 export type OperationStatus =
-  | 'PENDING' // not yet begun processing but has been submitted
-  | 'IN_PROGRESS' // processing the execution steps of the operation
-  | 'COMPLETED' // all steps completed with success
-  | 'REFUNDED' // none or some steps completed, some required step failed causing the whole operation to be refunded
-  | 'FAILED'; // all steps failed
+  | 'PENDING' // Operation has been submitted but processing has not yet begun
+  | 'IN_PROGRESS' // Currently processing the execution steps of the operation
+  | 'EXECUTED' // Transaction has been executed on the destination chain but origin chain operations may still be pending
+  | 'COMPLETED' // All operations on both origin and destination chains have been completed successfully
+  | 'REFUNDED' // Operation failed at some step, causing the whole operation to be refunded
+  | 'FAILED'; // All steps of the operation failed
 
+// Operation transaction details
 export interface OperationDetails {
-  hash?: Hex;
-  chainId?: number;
-  explorerUrl?: string;
+  hash: string;
+  chainId: number;
+  chain: string;
+  explorerUrl: string;
 }
 
 export interface HistoryTransaction {
@@ -524,4 +568,31 @@ export interface ExecutionStatusResponse {
   status: OperationStatus;
   createdAt: string;
   updatedAt: string;
+}
+
+// Chain Types
+
+// Chain entity identifier
+export interface ChainEntity {
+  chain: string; // CAIP-2 format like "eip155:42161"
+  namespace: string; // e.g., "eip155", "solana"
+  reference: string; // e.g., "42161", "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"
+}
+
+// Supported blockchain network
+export interface SupportedChain {
+  chain: ChainEntity;
+  isTestnet: boolean;
+}
+
+// Crypto Key Types
+export interface EOAKeyPair {
+  privateKey: Hex;
+  address: Hex;
+}
+
+export interface SolanaKeyPair {
+  keypair: Keypair;
+  publicKey: string;
+  secretKey: number[];
 }

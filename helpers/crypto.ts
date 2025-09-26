@@ -3,11 +3,12 @@ import { join } from 'node:path';
 import { HashTypedDataParameters } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { Keypair } from '@solana/web3.js';
+import { EOAKeyPair, SolanaKeyPair } from './types';
 
 export type Hex = `0x${string}`;
 
 // Generate session key pair
-export function generateEOAKey() {
+export function generateEOAKey(): EOAKeyPair {
   const privateKey = generatePrivateKey();
   const account = privateKeyToAccount(privateKey);
 
@@ -17,7 +18,7 @@ export function generateEOAKey() {
   };
 }
 
-export function readOrCacheEOAKey(key: string) {
+export function readOrCacheEOAKey(key: string): EOAKeyPair {
   // Always use the centralized keys directory in helpers/keys/
   const keysDir = join(__dirname, 'keys');
   const keyPath = join(keysDir, `${key}-key.json`);
@@ -45,7 +46,7 @@ export async function signTypedData(typedData: HashTypedDataParameters, privateK
 }
 
 // Generate or read cached Solana keypair
-export function generateSolanaKey() {
+export function generateSolanaKey(): SolanaKeyPair {
   const keypair = Keypair.generate();
   return {
     keypair,
@@ -55,7 +56,7 @@ export function generateSolanaKey() {
 }
 
 // Load or cache Solana keypair (similar to readOrCacheEOAKey)
-export function loadSolanaKey() {
+export function loadSolanaKey(): SolanaKeyPair {
   // Always use the centralized keys directory in helpers/keys/
   const keysDir = join(__dirname, 'keys');
   const keyPath = join(keysDir, 'solana-key.json');
