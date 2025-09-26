@@ -10,6 +10,7 @@ export {
   predictBasicAddress,
   prepareCallQuote,
   fetchCallQuote,
+  getQuote,
   executeQuote,
   getQuoteV3,
   executeQuoteV3,
@@ -21,6 +22,8 @@ export {
   monitorTransactionCompletion,
   signOperation,
   signSolanaOperation,
+  listAggregatedAssets,
+  listSupportedChains,
 } from './onebalance';
 
 // Types

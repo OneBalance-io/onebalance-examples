@@ -11,6 +11,17 @@ import {
   ContractAccountType,
   DelegationSignatureType,
   SerializedUserOperation,
+  PredictAddressRoleBasedRequest,
+  PredictAddressBasicRequest,
+  PredictAddressResponse,
+  QuoteRequestV1,
+  QuoteResponseV1,
+  QuoteRequestV3,
+  QuoteResponseV3,
+  AggregatedBalanceResponseV3,
+  ExecutionStatusResponseV3,
+  HistoryResponseV3,
+  AggregatedAsset,
 } from './types';
 import { apiPost, apiGet } from './api';
 import { PrivateKeyAccount } from 'viem';
@@ -21,25 +32,25 @@ import bs58 from 'bs58';
 
 // OneBalance API methods
 export async function predictAddress(sessionAddress: string, adminAddress: string): Promise<string> {
-  const response = await apiPost<
-    { sessionAddress: string; adminAddress: string },
-    { predictedAddress: string }
-  >('/api/account/predict-address', {
-    sessionAddress,
-    adminAddress,
-  });
+  const response = await apiPost<PredictAddressRoleBasedRequest, PredictAddressResponse>(
+    '/api/account/predict-address',
+    {
+      sessionAddress: sessionAddress as Hex,
+      adminAddress: adminAddress as Hex,
+    }
+  );
 
   return response.predictedAddress;
 }
 
 export async function predictBasicAddress(type: string, signerAddress: string): Promise<string> {
-  const response = await apiPost<
-    { type: string; signerAddress: string },
-    { predictedAddress: string }
-  >('/api/account/predict-address', {
-    type,
-    signerAddress,
-  });
+  const response = await apiPost<PredictAddressBasicRequest, PredictAddressResponse>(
+    '/api/account/predict-address',
+    {
+      type,
+      signerAddress: signerAddress as Hex,
+    }
+  );
 
   return response.predictedAddress;
 }
@@ -52,18 +63,22 @@ export async function fetchCallQuote(callRequest: CallRequest): Promise<Quote> {
   return apiPost<CallRequest, Quote>('/api/quotes/call-quote', callRequest);
 }
 
-export async function executeQuote(quote: Quote): Promise<BundleResponse> {
-  return apiPost<Quote, BundleResponse>('/api/quotes/execute-quote', quote);
+export async function getQuote(quoteRequest: QuoteRequestV1): Promise<QuoteResponseV1> {
+  return apiPost<QuoteRequestV1, QuoteResponseV1>('/api/v1/quote', quoteRequest);
+}
+
+export async function executeQuote(quote: QuoteResponseV1): Promise<BundleResponse> {
+  return apiPost<QuoteResponseV1, BundleResponse>('/api/quotes/execute-quote', quote);
 }
 
 // V3 quote endpoint that supports Solana and multi-account operations
-export async function getQuoteV3(quoteRequest: any): Promise<any> {
-  return apiPost<any, any>('/api/v3/quote', quoteRequest);
+export async function getQuoteV3(quoteRequest: QuoteRequestV3): Promise<QuoteResponseV3> {
+  return apiPost<QuoteRequestV3, QuoteResponseV3>('/api/v3/quote', quoteRequest);
 }
 
 // V3 execute quote endpoint that supports Solana and multi-account operations
-export async function executeQuoteV3(signedQuote: any): Promise<any> {
-  return apiPost<any, any>('/api/v3/quote/execute-quote', signedQuote);
+export async function executeQuoteV3(signedQuote: QuoteResponseV3): Promise<BundleResponse> {
+  return apiPost<QuoteResponseV3, BundleResponse>('/api/v3/quote/execute-quote', signedQuote);
 }
 
 export async function fetchTransactionHistory(address: string): Promise<HistoryResponse> {
@@ -106,7 +121,7 @@ export async function fetchAggregatedBalanceV3(
   account: string,
   aggregatedAssetId?: string,
   assetId?: string
-) {
+): Promise<AggregatedBalanceResponseV3> {
   const params: any = { account };
   
   if (aggregatedAssetId) {
@@ -117,29 +132,10 @@ export async function fetchAggregatedBalanceV3(
     params.assetId = assetId;
   }
 
-  const response = await apiGet<
-    typeof params,
-    {
-      balanceByAggregatedAsset: {
-        aggregatedAssetId: string;
-        balance: string;
-        individualAssetBalances: { 
-          assetType: string; 
-          balance: string; 
-          fiatValue: number 
-        }[];
-        fiatValue: number;
-      }[];
-      balanceBySpecificAsset: {
-        assetType: string;
-        balance: string;
-        fiatValue: number;
-      }[];
-      totalBalance: {
-        fiatValue: number;
-      };
-    }
-  >('/api/v3/balances/aggregated-balance', params);
+  const response = await apiGet<typeof params, AggregatedBalanceResponseV3>(
+    '/api/v3/balances/aggregated-balance', 
+    params
+  );
   return response;
 }
 
@@ -154,7 +150,17 @@ export async function fetchExecutionStatus(quoteId: string): Promise<ExecutionSt
   });
 }
 
-export async function monitorTransactionCompletion(quote: Quote): Promise<void> {
+// List all aggregated assets
+export async function listAggregatedAssets(): Promise<AggregatedAsset[]> {
+  return apiGet<{}, AggregatedAsset[]>('/api/assets/list', {});
+}
+
+// List supported chains
+export async function listSupportedChains(): Promise<any> {
+  return apiGet<{}, any>('/api/chains/supported', {});
+}
+
+export async function monitorTransactionCompletion(quote: Quote | QuoteResponseV1 | QuoteResponseV3): Promise<void> {
   console.log('\n🔍 Monitoring transaction completion...');
   console.log('Quote ID:', quote.id);
   

@@ -82,9 +82,9 @@ async function swapUSDCtoAERO() {
     const quoteRequest = {
       from: {
         accounts: [{
-          type: 'kernel-v3.1-ecdsa',
-          signerAddress: account.signerAddress,
-          accountAddress: account.accountAddress
+          type: 'kernel-v3.1-ecdsa' as const,
+          signerAddress: account.signerAddress as `0x${string}`,
+          accountAddress: account.accountAddress as `0x${string}`
         }],
         asset: {
           assetId: 'ob:usdc' // Aggregated USDC
@@ -103,20 +103,24 @@ async function swapUSDCtoAERO() {
     
     console.log('✅ Quote received:', {
       id: quote.id,
-      willReceive: `${formatUnits(quote.destinationToken.amount, 18)} AERO`, // AERO has 18 decimals
-      fiatValue: `$${quote.destinationToken.fiatValue}`
+      willReceive: quote.destinationToken ? `${formatUnits(BigInt(quote.destinationToken.amount), 18)} AERO` : 'Unknown amount', // AERO has 18 decimals
+      fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value'
     });
 
     // Step 2: Sign all chain operations
     console.log('\n🔐 Signing operations...');
     
     for (let i = 0; i < quote.originChainsOperations.length; i++) {
-      const signedOperation = await signOperation(
-        quote.originChainsOperations[i],
-        signerKey.privateKey,
-        ContractAccountType.KernelV31 // Use kernel v3.1 signing
-      );
-      quote.originChainsOperations[i] = signedOperation;
+      const operation = quote.originChainsOperations[i];
+      // Only sign EVM operations, skip Solana operations
+      if ('userOp' in operation && 'typedDataToSign' in operation) {
+        const signedOperation = await signOperation(
+          operation,
+          signerKey.privateKey,
+          ContractAccountType.KernelV31 // Use kernel v3.1 signing
+        );
+        quote.originChainsOperations[i] = signedOperation;
+      }
     }
     
     console.log('✅ All operations signed successfully');
