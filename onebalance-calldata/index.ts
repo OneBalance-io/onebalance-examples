@@ -131,7 +131,7 @@ async function fetchBalances(address: string) {
 
 async function fetchUSDCBalance(address: string) {
   const response = await fetchBalances(address);
-  return response.balanceByAggregatedAsset.find((asset) => asset.aggregatedAssetId === 'ds:usdc');
+  return response.balanceByAggregatedAsset.find((asset) => asset.aggregatedAssetId === 'ob:usdc');
 }
 
 type Hex = `0x${string}`;
@@ -413,7 +413,7 @@ async function transferErc20OnChain(
   const signedChainOp = await signOperation(preparedQuote.chainOperation, sessionKey.privateKey);
 
   const callRequest: CallRequest = {
-    fromAggregatedAssetId: 'ds:usdc',
+    fromAggregatedAssetId: 'ob:usdc',
     account,
     tamperProofSignature: preparedQuote.tamperProofSignature,
     chainOperation: signedChainOp,

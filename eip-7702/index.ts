@@ -85,7 +85,7 @@ async function transferErc20WithEIP7702(
     account,
     tamperProofSignature: preparedQuote.tamperProofSignature,
     chainOperation: signedChainOp,
-    fromAggregatedAssetId: 'ds:usdc',
+    fromAggregatedAssetId: 'ob:usdc',
   };
 
   console.log('Fetching call quote...');

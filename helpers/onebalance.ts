@@ -126,7 +126,7 @@ export async function fetchUSDCBalance(
   address: string,
 ): Promise<AggregatedAssetBalance | undefined> {
   const response = await fetchBalances(address);
-  return response.balanceByAggregatedAsset.find((asset) => asset.aggregatedAssetId === 'ds:usdc');
+  return response.balanceByAggregatedAsset.find((asset) => asset.aggregatedAssetId === 'ob:usdc');
 }
 
 export async function fetchExecutionStatus(quoteId: string): Promise<ExecutionStatusResponse> {

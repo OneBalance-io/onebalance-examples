@@ -13,8 +13,8 @@ export function isSolanaInvolved(fromAssetId: string, toAssetId: string): boolea
   return (
     fromAssetId.startsWith('solana:') ||
     toAssetId.startsWith('solana:') ||
-    fromAssetId === 'ds:sol' ||
-    toAssetId === 'ds:sol'
+    fromAssetId === 'ob:sol' ||
+    toAssetId === 'ob:sol'
   );
 }
 
@@ -25,7 +25,7 @@ export function isSolanaInvolved(fromAssetId: string, toAssetId: string): boolea
  * @returns True if the asset is Solana-based
  */
 export function isSolanaAsset(assetId: string): boolean {
-  return assetId.startsWith('solana:') || assetId === 'ds:sol';
+  return assetId.startsWith('solana:') || assetId === 'ob:sol';
 }
 
 /**
@@ -50,7 +50,7 @@ export function extractSolanaTokenAddress(assetId: string): string | null {
  * @returns Formatted symbol for display
  */
 export function formatSolanaAssetSymbol(assetId: string): string {
-  if (assetId === 'ds:sol') {
+  if (assetId === 'ob:sol') {
     return 'SOL';
   }
 

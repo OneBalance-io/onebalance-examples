@@ -22,10 +22,10 @@ async function checkSOLBalance(accountAddress: string) {
   try {
     console.log('🔍 Checking account balance...');
 
-    const response = await fetchAggregatedBalanceV3(`solana:${accountAddress}`, 'ds:sol');
+    const response = await fetchAggregatedBalanceV3(`solana:${accountAddress}`, 'ob:sol');
 
     const solBalance = response.balanceByAggregatedAsset?.find(
-      (asset) => asset.aggregatedAssetId === 'ds:sol',
+      (asset) => asset.aggregatedAssetId === 'ob:sol',
     );
 
     if (!solBalance) {

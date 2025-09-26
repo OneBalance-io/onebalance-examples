@@ -39,7 +39,7 @@ export async function checkAssetBalance(
 
     // Call API with correct parameter based on asset type
     let response;
-    if (assetId.startsWith('ds:')) {
+    if (assetId.startsWith('ob:')) {
       // For aggregated assets, pass as aggregatedAssetId
       response = await fetchAggregatedBalanceV3(accountIdentifier, assetId);
     } else {
@@ -50,14 +50,14 @@ export async function checkAssetBalance(
     let balance: string | undefined;
     let assetSymbol: string = assetId;
 
-    // Check if it's an aggregated asset (starts with 'ds:')
-    if (assetId.startsWith('ds:')) {
+    // Check if it's an aggregated asset (starts with 'ob:')
+    if (assetId.startsWith('ob:')) {
       const aggregatedBalance = response.balanceByAggregatedAsset?.find(
         (asset) => asset.aggregatedAssetId === assetId,
       );
       if (aggregatedBalance) {
         balance = aggregatedBalance.balance;
-        assetSymbol = assetId.replace('ds:', '').toUpperCase();
+        assetSymbol = assetId.replace('ob:', '').toUpperCase();
       }
     } else {
       // For specific asset IDs, check in balanceBySpecificAsset
@@ -127,8 +127,8 @@ export async function checkMultipleAssetBalances(
       const balance = await checkAssetBalance(accountAddress, asset.assetId, asset.decimals);
       let symbol = asset.assetId;
 
-      if (asset.assetId.startsWith('ds:')) {
-        symbol = asset.assetId.replace('ds:', '').toUpperCase();
+      if (asset.assetId.startsWith('ob:')) {
+        symbol = asset.assetId.replace('ob:', '').toUpperCase();
       } else if (isSolanaAsset(asset.assetId)) {
         symbol = formatSolanaAssetSymbol(asset.assetId);
       }

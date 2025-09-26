@@ -82,15 +82,15 @@ async function main() {
   try {
     // Example 1: Swap from aggregated USDC to SOL on Solana
     // await simpleSwap({
-    //     fromAssetId: 'ds:usdc',
-    //     toAssetId: 'ds:sol',
+    //     fromAssetId: 'ob:usdc',
+    //     toAssetId: 'ob:sol',
     //     amount: parseUnits('0.5', 6).toString(),
     //     decimals: 6
     // });
 
     // Example 2: Swap from aggregated USDT to Solana USDC
     // await simpleSwap({
-    //     fromAssetId: 'ds:usdt',
+    //     fromAssetId: 'ob:usdt',
     //     toAssetId: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     //     amount: parseUnits('0.5', 6).toString(),
     //     decimals: 6
@@ -115,14 +115,14 @@ async function main() {
     // Example 5: Swap from AERO on Base to aggregated USDC
     // await simpleSwap({
     //     fromAssetId: 'eip155:8453/erc20:0x940181a94a35a4569e4529a3cdfb74e38fd98631',
-    //     toAssetId: 'ds:usdc',
+    //     toAssetId: 'ob:usdc',
     //     amount: parseUnits('1.5', 18).toString(),
     //     decimals: 18
     // });
 
     // Example 6: Swap from aggregated USDC to JUP on Solana
     await simpleSwap({
-      fromAssetId: 'ds:usdc',
+      fromAssetId: 'ob:usdc',
       toAssetId:
         'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
       amount: parseUnits('0.7', 6).toString(),

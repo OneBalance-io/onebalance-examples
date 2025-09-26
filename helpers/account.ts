@@ -161,7 +161,7 @@ export function getBalanceCheckAddress(
   evmAccount: BasicAccount,
   solanaAccount: SolanaAccount | null,
 ): string {
-  const isSolanaAsset = assetId.startsWith('solana:') || assetId === 'ds:sol';
+  const isSolanaAsset = assetId.startsWith('solana:') || assetId === 'ob:sol';
 
   if (isSolanaAsset && solanaAccount) {
     return solanaAccount.accountAddress;
