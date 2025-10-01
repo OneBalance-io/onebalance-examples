@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "calldata": "ts-node onebalance-calldata/index.ts",
+    "calldata:standard-account": "ts-node calldata/standard-account.ts",
     "eip-7702": "ts-node eip-7702/index.ts",
     "solana-swap": "ts-node solana/swap.ts",
     "swap:role-based": "ts-node swap/role-based.ts",

@@ -313,16 +313,8 @@ export interface ChainInfo {
 }
 
 // Call Quote Types (V3)
-export interface CallRequestV3 {
-  account: Account;
-  chainOperation: ChainOperation;
-  tamperProofSignature: string;
-  fromAggregatedAssetId?: string;
-  slippageTolerance?: number;
-}
-
 export interface PrepareCallRequestV3 {
-  account: Account;
+  accounts: Account[];
   targetChain: string;
   calls: Array<{
     to: Hex;
@@ -346,11 +338,12 @@ export interface PrepareCallRequestV3 {
   }>;
   validAfter?: string;
   validUntil?: string;
+  fromAssetId?: string;
   slippageTolerance?: number;
 }
 
 export interface TargetCallQuoteV3 {
-  account: Account;
+  accounts: Account[];
   chainOperation: ChainOperation;
   tamperProofSignature: string;
   callType?: string;
@@ -361,6 +354,41 @@ export interface TargetCallQuoteV3 {
     fiatValue: number;
   }>;
   delegation?: Delegation;
+}
+
+export interface CallRequestV3 {
+  accounts: Account[];
+  chainOperation: ChainOperation;
+  tamperProofSignature: string;
+  fromAggregatedAssetId?: string;
+  slippageTolerance?: number;
+}
+
+export interface CallQuoteResponseV3 {
+  id: string;
+  accounts: Account[];
+  originChainsOperations: Array<ChainOperation | SolanaOperation>;
+  destinationChainOperation?: ChainOperation;
+  originToken?: OriginTokenInfo;
+  destinationToken?: DestinationTokenInfo;
+  expirationTimestamp: string;
+  slippage?: {
+    origin: {
+      percent: string;
+      usd: string;
+      value: string;
+    };
+    destination: {
+      percent: string;
+      usd: string;
+      value: string;
+    };
+  };
+  fees?: {
+    assets: Record<string, string>;
+    cumulativeUSD: string;
+  };
+  tamperProofSignature: string;
 }
 
 export interface EvmAccount {

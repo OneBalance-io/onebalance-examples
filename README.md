@@ -10,14 +10,16 @@ pnpm install
 # Run examples
 pnpm run swap:simple
 pnpm run swap:role-based
-pnpm run calldata
+pnpm run calldata                  # V1 calldata example
+pnpm run calldata:standard-account # V3 calldata example (recommended)
 pnpm run eip-7702
 ```
 
 ## Examples
 
 - **`swap/`** - Cross-chain swap examples with different account types
-- **`onebalance-calldata/`** - ERC20 transfers and balance checking
+- **`calldata/`** - V3 calldata examples with Basic accounts
+- **`onebalance-calldata/`** - V1 ERC20 transfers and balance checking (legacy)
 - **`eip-7702/`** - Atomic cross-chain execution with delegation
 - **`solana/`** - Solana-specific swap operations
 
