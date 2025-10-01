@@ -2,6 +2,8 @@
 
 This folder contains examples of using OneBalance's V3 calldata endpoints to execute arbitrary smart contract calls using Basic accounts (kernel-v3.1-ecdsa).
 
+📋 **[See CALLDATA_FINDINGS.md](./CALLDATA_FINDINGS.md)** for detailed V1 vs V3 comparison, known issues (SUP-231), and technical analysis.
+
 ## 📁 Examples
 
 ### `standard-account.ts` (V3)
@@ -76,7 +78,7 @@ pnpm run calldata:euler-vault-v1
 
 ## Example 3: Euler Vault Deposit/Withdraw (V3) - `euler-vault-v3.ts`
 
-⚠️ **Note:** V3 calldata endpoints currently have an API inconsistency bug. See [CALLDATA_FINDINGS.md](../.context/CALLDATA_FINDINGS.md) for details.
+⚠️ **Note:** V3 calldata endpoints currently have an API inconsistency bug. See [CALLDATA_FINDINGS.md](./CALLDATA_FINDINGS.md) for details.
 
 This example demonstrates both depositing and withdrawing from an Euler V2 vault using **V3 endpoints**. It showcases the same vault operations as the V1 example but with V3's enhanced features (when the API is fixed).
 
