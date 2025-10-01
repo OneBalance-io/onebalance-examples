@@ -10,8 +10,9 @@ pnpm install
 # Run examples
 pnpm run swap:simple
 pnpm run swap:role-based
-pnpm run calldata                  # V1 calldata example
+pnpm run calldata                  # V1 calldata example (legacy)
 pnpm run calldata:standard-account # V3 calldata example (recommended)
+pnpm run calldata:euler-vault-v1      # V1 Euler vault deposit/withdraw example
 pnpm run eip-7702
 ```
 

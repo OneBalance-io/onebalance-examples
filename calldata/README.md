@@ -4,7 +4,7 @@ This folder contains examples of using OneBalance's V3 calldata endpoints to exe
 
 ## 📁 Examples
 
-### `standard-account.ts`
+### `standard-account.ts` (V3)
 
 Simple example showing how to use V3 calldata endpoints with a Basic account to perform a USDC transfer.
 
@@ -21,7 +21,57 @@ Simple example showing how to use V3 calldata endpoints with a Basic account to 
 
 **Run:**
 ```bash
-ts-node calldata/standard-account.ts
+pnpm run calldata:standard-account
+```
+
+### `euler-vault-v1.ts` (V1)
+
+Euler vault deposit/withdraw example using V1 calldata endpoints. Demonstrates both depositing AERO tokens and withdrawing them from the eAERO-1 vault.
+
+**Important:** V1 endpoints only support CAIP-19 format (chain-specific tokens), NOT aggregated assets. Requires AERO on Base chain.
+
+**Token Details:**
+- **AERO on Base:** `0x940181a94A35A4569E4529A3CDfB74e38FD98631` (CAIP-19: `eip155:8453/erc20:0x940181a94a35a4569e4529a3cdfb74e38fd98631`)
+- **Vault Token:** EVK Vault eAERO-1 (eAERO-1)
+- **Network:** Base
+- **Proxy Contract:** `0x5Fe2DE3E565a6a501a4Ec44AAB8664b1D674ac25`
+- **Implementation:** `0x30a9A9654804F1e5b3291a86E83EdeD7cF281618`
+- **Proxy Pattern:** EIP-1967 Beacon Proxy
+- **Type:** ERC-20 vault shares (Euler V2)
+- **Decimals:** 18
+
+**Operations:**
+1. **DEPOSIT** - `deposit(uint256 assets, address receiver)` - Selector: `0x6e553f65`
+   - Requires AERO tokens on Base (V1 doesn't support cross-chain routing)
+   - Deposits AERO tokens into the vault on Base
+   - Receives eAERO-1 vault tokens in return
+   - Call type: `same_chain_exclude_solver`
+   
+2. **WITHDRAW** - `redeem(uint256 shares, address receiver, address owner)` - Selector: `0xba087652`
+   - Burns eAERO-1 vault tokens
+   - Receives AERO tokens back on Base
+   - Call type: `same_chain_exclude_solver`
+
+**Configuration:**
+Change the `OPERATION` constant at the top of the file:
+```typescript
+const OPERATION: 'deposit' | 'withdraw' = 'deposit'; // or 'withdraw'
+```
+
+**Flow:**
+1. Load session key and predict account address
+2. Verify token balance (AERO for deposit, eAERO-1 for withdraw)
+3. Encode function call (deposit or redeem)
+4. Prepare call quote using `/api/quotes/prepare-call-quote`
+5. Sign chain operation
+6. Get call quote using `/api/quotes/call-quote`
+7. Sign origin chain operations
+8. Execute quote using `/api/quotes/execute-quote`
+9. Monitor transaction completion
+
+**Run:**
+```bash
+pnpm run calldata:euler-vault-v1
 ```
 
 ## 🔑 Key Differences from V1
