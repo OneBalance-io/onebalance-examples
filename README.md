@@ -14,12 +14,19 @@ pnpm run calldata                     # V1 calldata example (legacy)
 pnpm run calldata:standard-account    # V3 calldata example (recommended)
 pnpm run calldata:euler-vault-v1      # V1 Euler vault deposit/withdraw example
 pnpm run calldata:euler-vault-v3      # V3 Euler vault deposit/withdraw example
+pnpm run swap:simple                  # Swap with basic account
+pnpm run swap:simple-role-based       # Swap with role-based account
+pnpm run transfer:simple              # Transfer with basic account
+pnpm run transfer:simple-role-based   # Transfer with role-based account
 pnpm run eip-7702
 ```
 
 ## Examples
 
 - **`swap/`** - Cross-chain swap examples with different account types
+- **`calldata/`** - V3 calldata examples with Basic accounts
+- **`onebalance-calldata/`** - V1 ERC20 transfers and balance checking (legacy)
+- **`transfer/`** - Asset transfer examples with recipient specification (CAIP-10)
 - **`calldata/`** - V3 calldata examples with Basic accounts
 - **`onebalance-calldata/`** - V1 ERC20 transfers and balance checking (legacy)
 - **`eip-7702/`** - Atomic cross-chain execution with delegation
