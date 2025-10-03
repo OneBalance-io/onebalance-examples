@@ -6,7 +6,8 @@ Simple examples showing how to perform swaps using OneBalance's aggregated asset
 
 - **`role-based.ts`** - Role-based account swap (dual-key)
 - **`basic.ts`** - Basic account swap (single-key)  
-- **`simple-swap.ts`** - Universal swap function with multiple examples
+- **`simple-swap.ts`** - Universal swap function with basic account (kernel-v3.1-ecdsa)
+- **`simple-swap-role-based.ts`** - Universal swap function with role-based account (dual-key)
 
 ## How to Run
 
@@ -17,8 +18,11 @@ pnpm run swap:role-based
 # Basic account example  
 pnpm run swap:basic
 
-# Simple swap examples
+# Simple swap examples (basic account)
 pnpm run swap:simple
+
+# Simple swap examples (role-based account)
+pnpm run swap:simple-role-based
 ```
 
 ## Setup
@@ -35,13 +39,27 @@ pnpm run swap:simple
 
 ### Role-Based Account
 - **Security**: Dual-key architecture (session + admin)
-- **Signing**: EIP-712 typed data
+- **Signing**: EIP-712 typed data (signTypedData)
+- **API Version**: V1 for EVM-only, V3 when Solana is involved
 - **Use Case**: Enhanced security with backup admin
 
 ### Basic Account (Kernel v3.1)
 - **Simplicity**: Single-key architecture
-- **Signing**: UserOperation hash
+- **Signing**: UserOperation hash (signMessage)
+- **API Version**: V3 for all operations
 - **Use Case**: Simple operations with one signer
+
+## API Endpoints
+
+The `simple-swap-role-based.ts` example intelligently chooses between API versions:
+- **V1 API** (`/api/v1/quote`): Used for EVM-to-EVM swaps
+  - Single account structure
+  - Simpler request format
+  - Optimal for cross-chain EVM operations
+- **V3 API** (`/api/v3/quote`): Used when Solana is involved
+  - Multi-account support (EVM + Solana)
+  - Handles mixed chain types
+  - Required for Solana integration
 
 ## Aggregated Assets
 
