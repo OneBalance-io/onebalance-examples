@@ -1,8 +1,6 @@
-# OneBalance V3 Calldata Examples
+# OneBalance Calldata Examples
 
-This folder contains examples of using OneBalance's V3 calldata endpoints to execute arbitrary smart contract calls using Basic accounts (kernel-v3.1-ecdsa).
-
-📋 **[See CALLDATA_FINDINGS.md](./CALLDATA_FINDINGS.md)** for detailed V1 vs V3 comparison, known issues (SUP-231), and technical analysis.
+This folder contains examples of using OneBalance's V1 and V3 calldata endpoints to execute arbitrary smart contract calls using Basic accounts (kernel-v3.1-ecdsa).
 
 ## 📁 Examples
 
@@ -76,11 +74,9 @@ const OPERATION: 'deposit' | 'withdraw' = 'deposit'; // or 'withdraw'
 pnpm run calldata:euler-vault-v1
 ```
 
-## Example 3: Euler Vault Deposit/Withdraw (V3) - `euler-vault-v3.ts`
+### `euler-vault-v3.ts` (V3)
 
-⚠️ **Note:** V3 calldata endpoints currently have an API inconsistency bug. See [CALLDATA_FINDINGS.md](./CALLDATA_FINDINGS.md) for details.
-
-This example demonstrates both depositing and withdrawing from an Euler V2 vault using **V3 endpoints**. It showcases the same vault operations as the V1 example but with V3's enhanced features (when the API is fixed).
+Euler vault deposit/withdraw example using V3 calldata endpoints. Demonstrates both depositing AERO tokens and withdrawing them from the eAERO-1 vault with V3's enhanced features.
 
 ### Scenario
 
@@ -114,10 +110,6 @@ This example demonstrates both depositing and withdrawing from an Euler V2 vault
 ```bash
 pnpm run calldata:euler-vault-v3
 ```
-
-**Known Issue:** Currently fails at execution with `Required at "accounts"` error due to API returning `account` instead of `accounts`.
-
-**Client-Side Workaround Not Possible:** Transforming the response structure breaks the `tamperProofSignature` validation, resulting in "Incorrect tamper proof signature" error. This requires a backend fix (SUP-231).
 
 ## 🔑 Key Differences: V1 vs V3
 
