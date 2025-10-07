@@ -49,7 +49,7 @@ const VAULT_IMPLEMENTATION = '0x30a9A9654804F1e5b3291a86E83EdeD7cF281618'; // Im
 const AERO_TOKEN_ADDRESS = '0x940181a94A35A4569E4529A3CDfB74e38FD98631'; // AERO token on Base
 
 // Operation to perform: 'deposit' or 'withdraw'
-const OPERATION: 'deposit' | 'withdraw' = 'deposit';
+const OPERATION: 'deposit' | 'withdraw' = 'withdraw';
 
 // Amounts
 const DEPOSIT_AMOUNT = '500000000000000000'; // 0.5 AERO (18 decimals)
@@ -235,8 +235,15 @@ async function preparePrepareCallQuote(
       ],
       tokensRequired: [
         {
-          assetType: `${CHAIN}/erc20:${VAULT_TOKEN_ADDRESS.toLowerCase()}`,
-          amount: WITHDRAW_AMOUNT,
+          // Workaround for vault tokens without third-party services pricing:
+          // Set native token with amount 0 to bypass backend fiat price checks.
+          // For same-chain withdrawals, the actual vault token doesn't need to be in tokensRequired.
+          assetType: `${CHAIN}/slip44:60`,
+          amount: '0',
+
+          // DON'T USE THIS - IT WILL FAIL
+          // assetType: `${CHAIN}/erc20:${VAULT_TOKEN_ADDRESS.toLowerCase()}`,
+          // amount: WITHDRAW_AMOUNT,
         },
       ],
       // Allowance for vault to burn eAERO-1 tokens
