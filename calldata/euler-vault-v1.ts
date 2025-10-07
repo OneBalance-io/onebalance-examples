@@ -235,8 +235,15 @@ async function preparePrepareCallQuote(
       ],
       tokensRequired: [
         {
-          assetType: `${CHAIN}/erc20:${VAULT_TOKEN_ADDRESS.toLowerCase()}`,
-          amount: WITHDRAW_AMOUNT,
+          // Workaround for vault tokens without third-party services pricing:
+          // Set native token with amount 0 to bypass backend fiat price checks.
+          // For same-chain withdrawals, the actual vault token doesn't need to be in tokensRequired.
+          assetType: `${CHAIN}/slip44:60`,
+          amount: '0',
+
+          // DON'T USE THIS - IT WILL FAIL
+          // assetType: `${CHAIN}/erc20:${VAULT_TOKEN_ADDRESS.toLowerCase()}`,
+          // amount: WITHDRAW_AMOUNT,
         },
       ],
       // Allowance for vault to burn eAERO-1 tokens
