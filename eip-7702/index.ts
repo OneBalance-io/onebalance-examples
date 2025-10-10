@@ -8,7 +8,7 @@ import {
   fetchUSDCBalance,
   monitorTransactionCompletion,
   signOperation,
-  type EvmAccount,
+  type EIP7702Account,
   type PrepareCallRequest,
   type CallRequest,
   type Hex,
@@ -16,7 +16,7 @@ import {
 } from '../helpers';
 
 async function transferErc20WithEIP7702(
-  account: EvmAccount,
+  account: EIP7702Account,
   signerPrivateKey: Hex,
   usdcBalances: {
     aggregatedAssetId: string;
@@ -120,7 +120,7 @@ async function main() {
     console.log('Using EOA Address:', signerKey.address);
 
     // Configure EIP-7702 account using the EOA address
-    const account: EvmAccount = {
+    const account: EIP7702Account = {
       type: 'kernel-v3.3-ecdsa',
       deploymentType: 'EIP7702',
       accountAddress: signerKey.address.toLowerCase() as Hex,

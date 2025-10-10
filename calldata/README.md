@@ -1,12 +1,20 @@
 # OneBalance Calldata Examples
 
-Examples of using OneBalance's V1 and V3 calldata endpoints to execute arbitrary smart contract calls with Standard accounts (kernel-v3.1-ecdsa).
+Examples of using OneBalance's V1 and V3 calldata endpoints to execute arbitrary smart contract calls.
 
 ## Examples
 
+### `erc20transfer.ts` (V1)
+
+Simple ERC20 USDC transfer example using V1 calldata endpoints with Role-based accounts.
+
+```bash
+pnpm run calldata:erc20transfer
+```
+
 ### `standard-account.ts` (V3)
 
-Simple USDC transfer example using V3 calldata endpoints.
+Simple USDC transfer example using V3 calldata endpoints with Standard accounts (kernel-v3.1-ecdsa).
 
 ```bash
 pnpm run calldata:standard-account

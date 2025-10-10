@@ -38,7 +38,7 @@ pnpm run eip-7702
 ### EIP-7702 Account Configuration
 
 ```typescript
-const account: EvmAccount = {
+const account: EIP7702Account = {
   type: 'kernel-v3.3-ecdsa',
   deploymentType: 'EIP7702',
   accountAddress: eoaAddress,  // Same as EOA

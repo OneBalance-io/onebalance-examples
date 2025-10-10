@@ -391,12 +391,7 @@ export interface CallQuoteResponseV3 {
   tamperProofSignature: string;
 }
 
-export interface EvmAccount {
-  type: 'kernel-v3.3-ecdsa';
-  deploymentType: 'EIP7702';
-  accountAddress: Hex;
-  signerAddress: Hex; // Same as accountAddress for 7702
-}
+export type EvmAccount = RoleBasedAccount | StandardAccount | EIP7702Account;
 
 export interface EvmCall {
   to: Hex;

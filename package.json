@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "calldata": "ts-node onebalance-calldata/index.ts",
+    "calldata:erc20transfer": "ts-node calldata/erc20transfer.ts",
     "calldata:standard-account": "ts-node calldata/standard-account.ts",
     "calldata:euler-vault-v1": "ts-node calldata/euler-vault-v1.ts",
     "calldata:euler-vault-v3": "ts-node calldata/euler-vault-v3.ts",
