@@ -1,7 +1,7 @@
 import { encodeFunctionData } from 'viem';
 import {
   readOrCacheEOAKey,
-  predictBasicAddress,
+  predictStandardAddress,
   prepareCallQuoteV3,
   fetchCallQuoteV3,
   executeQuoteV3,
@@ -17,7 +17,6 @@ import {
   TargetCallQuoteV3,
   ContractAccountType,
   EOAKeyPair,
-  EvmAccount,
 } from '../helpers/types';
 import eulerVaultAbi from '../abi/euler/eVaultImplementation.json';
 
@@ -62,20 +61,20 @@ const WITHDRAW_AMOUNT = '250000000000000000'; // 0.25 eAERO-1 (18 decimals)
 /**
  * Step 1: Load signer key and create account
  */
-async function loadAccount(): Promise<{ signerKey: EOAKeyPair; account: EvmAccount }> {
+async function loadAccount(): Promise<{ signerKey: EOAKeyPair; account: StandardAccount }> {
   console.log('📋 Step 1: Loading account...');
 
   const signerKey = readOrCacheEOAKey('session2');
-  const accountAddress = await predictBasicAddress('kernel-v3.1-ecdsa', signerKey.address);
+  const accountAddress = await predictStandardAddress('kernel-v3.1-ecdsa', signerKey.address);
 
   console.log(`Signer Address: ${signerKey.address}`);
   console.log(`Account Address: ${accountAddress}\n`);
 
-  const account: EvmAccount = {
+  const account: StandardAccount = {
     type: 'kernel-v3.1-ecdsa' as any,
     signerAddress: signerKey.address as Hex,
     accountAddress: accountAddress as Hex,
-  } as EvmAccount;
+  } as StandardAccount;
 
   return { signerKey, account };
 }
@@ -186,7 +185,7 @@ function prepareRedeemCalldata(shares: string, receiver: string, owner: string):
  * V3 uses accounts array and supports aggregated assets.
  */
 async function preparePrepareCallQuote(
-  account: EvmAccount,
+  account: StandardAccount,
   calldata: Hex,
   operation: 'deposit' | 'withdraw',
 ): Promise<TargetCallQuoteV3> {
@@ -274,7 +273,7 @@ async function preparePrepareCallQuote(
  * Step 5-6: Sign the chain operation and get the final call quote
  */
 async function getSignedCallQuote(
-  account: EvmAccount,
+  account: StandardAccount,
   preparedQuote: TargetCallQuoteV3,
   signerKey: EOAKeyPair,
 ): Promise<CallQuoteResponseV3> {

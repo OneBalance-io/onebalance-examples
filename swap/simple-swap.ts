@@ -12,7 +12,7 @@ import {
 } from '../helpers';
 
 /**
- * Universal swap function using basic account (kernel-v3.1-ecdsa)
+ * Universal swap function using standard account (kernel-v3.1-ecdsa)
  * Executes any swap payload without balance checking
  */
 async function simpleSwap(swapParams: SwapParams) {

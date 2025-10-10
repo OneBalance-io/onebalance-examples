@@ -1,7 +1,7 @@
 import { readOrCacheEOAKey, loadSolanaKey } from './crypto';
-import { predictBasicAddress } from './onebalance';
+import { predictStandardAddress } from './onebalance';
 import { isSolanaInvolved } from './solana';
-import { Account, BasicAccount, SolanaAccount, EOAKeyPair, SwapParams } from './types';
+import { Account, StandardAccount, SolanaAccount, EOAKeyPair, SwapParams } from './types';
 import { Keypair } from '@solana/web3.js';
 
 /**
@@ -13,7 +13,7 @@ import { Keypair } from '@solana/web3.js';
  */
 export interface LoadAccountsResult {
   accounts: Account[];
-  evmAccount: BasicAccount;
+  evmAccount: StandardAccount;
   solanaAccount: SolanaAccount | null;
   signerKey: EOAKeyPair;
   solanaKeypair: Keypair | null;
@@ -21,7 +21,7 @@ export interface LoadAccountsResult {
 
 export interface LoadMultiChainAccountsResult {
   accounts: Account[];
-  evmAccount: BasicAccount | null;
+  evmAccount: StandardAccount | null;
   solanaAccount: SolanaAccount | null;
   signerKey: EOAKeyPair | null;
   solanaKeypair: Keypair | null;
@@ -42,12 +42,12 @@ export async function loadAccounts(
 
   // Load EVM signer key and predict account address
   const signerKey = readOrCacheEOAKey(sessionKeyName);
-  const evmAccountAddress = await predictBasicAddress('kernel-v3.1-ecdsa', signerKey.address);
+  const evmAccountAddress = await predictStandardAddress('kernel-v3.1-ecdsa', signerKey.address);
 
   console.log(`EVM Signer: ${signerKey.address}`);
   console.log(`EVM Account: ${evmAccountAddress}`);
 
-  const evmAccount: BasicAccount = {
+  const evmAccount: StandardAccount = {
     type: 'kernel-v3.1-ecdsa' as const,
     signerAddress: signerKey.address as `0x${string}`,
     accountAddress: evmAccountAddress as `0x${string}`,
@@ -99,12 +99,12 @@ export async function loadMultiChainAccounts(options: {
 
   console.log('🔑 Loading multi-chain accounts...');
 
-  let evmAccount: BasicAccount | null = null;
+  let evmAccount: StandardAccount | null = null;
   let signerKey = null;
 
   if (needsEvm) {
     signerKey = readOrCacheEOAKey(sessionKeyName);
-    const evmAccountAddress = await predictBasicAddress('kernel-v3.1-ecdsa', signerKey.address);
+    const evmAccountAddress = await predictStandardAddress('kernel-v3.1-ecdsa', signerKey.address);
 
     console.log(`EVM Signer: ${signerKey.address}`);
     console.log(`EVM Account: ${evmAccountAddress}`);
@@ -158,7 +158,7 @@ export async function loadMultiChainAccounts(options: {
  */
 export function getBalanceCheckAddress(
   assetId: string,
-  evmAccount: BasicAccount,
+  evmAccount: StandardAccount,
   solanaAccount: SolanaAccount | null,
 ): string {
   const isSolanaAsset = assetId.startsWith('solana:') || assetId === 'ob:sol';

@@ -7,7 +7,7 @@
  *
  * This approach is optimal for production use with role-based accounts.
  *
- * Key differences from basic account version:
+ * Key differences from standard account version:
  * - Uses role-based account (dual-key: session + admin)
  * - Signs with EIP-712 typed data (signTypedData) instead of signMessage
  * - Requires both sessionAddress and adminAddress for account prediction
