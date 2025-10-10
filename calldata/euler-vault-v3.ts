@@ -17,6 +17,7 @@ import {
   TargetCallQuoteV3,
   ContractAccountType,
   EOAKeyPair,
+  StandardAccount,
 } from '../helpers/types';
 import eulerVaultAbi from '../abi/euler/eVaultImplementation.json';
 
