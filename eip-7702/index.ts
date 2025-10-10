@@ -13,6 +13,7 @@ import {
   type CallRequest,
   type Hex,
   ContractAccountType,
+  QuoteResponseV1,
 } from '../helpers';
 
 async function transferErc20WithEIP7702(
@@ -105,7 +106,7 @@ async function transferErc20WithEIP7702(
   console.log('All operations signed');
 
   // Execute quote
-  const result = await executeQuote(quote);
+  const result = await executeQuote(quote as QuoteResponseV1);
   console.log('Execution initiated, success:', result.success);
 
   await monitorTransactionCompletion(quote);

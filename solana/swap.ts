@@ -8,6 +8,8 @@ import {
   getQuoteV3,
   executeQuoteV3,
   signSolanaOperation,
+  QuoteRequestV3,
+  SolanaOperation,
 } from '../helpers';
 
 // Solana asset IDs
@@ -95,18 +97,22 @@ async function swapSOLtoUSDC() {
       },
     };
 
-    const quote = await getQuoteV3(quoteRequest);
+    const quote = await getQuoteV3(quoteRequest as QuoteRequestV3);
 
     console.log('✅ Quote received:', {
       id: quote.id,
-      willReceive: `${formatUnits(quote.destinationToken.amount, 6)} USDC`,
-      fiatValue: `$${quote.destinationToken.fiatValue}`,
+      willReceive: quote.destinationToken
+        ? `${formatUnits(BigInt(quote.destinationToken.amount), 6)} USDC`
+        : 'Unknown amount',
+      fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
     });
 
     // Step 2: Sign the Solana operation
     console.log('\n🔐 Signing Solana transaction...');
 
-    const solanaOperation = quote.originChainsOperations.find((op: any) => op.type === 'solana');
+    const solanaOperation: SolanaOperation = quote.originChainsOperations.find(
+      (op: any) => op.type === 'solana',
+    ) as SolanaOperation;
     if (!solanaOperation) {
       throw new Error('No Solana operation found in quote');
     }

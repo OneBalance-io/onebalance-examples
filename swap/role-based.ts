@@ -8,6 +8,8 @@ import {
   signOperation,
   predictAddress,
   ContractAccountType,
+  QuoteRequestV3,
+  ChainOperation,
 } from '../helpers';
 
 /**
@@ -105,12 +107,14 @@ async function swapUSDCtoUSDT() {
     };
 
     console.log('quoteRequest', JSON.stringify(quoteRequest, null, 2));
-    const quote = await getQuoteV3(quoteRequest);
+    const quote = await getQuoteV3(quoteRequest as QuoteRequestV3);
 
     console.log('✅ Quote received:', {
       id: quote.id,
-      willReceive: `${formatUnits(quote.destinationToken.amount, 6)} USDT`,
-      fiatValue: `$${quote.destinationToken.fiatValue}`,
+      willReceive: quote.destinationToken
+        ? `${formatUnits(BigInt(quote.destinationToken.amount), 6)} USDT`
+        : 'Unknown amount',
+      fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
     });
 
     // Step 2: Sign all chain operations
@@ -118,7 +122,7 @@ async function swapUSDCtoUSDT() {
 
     for (let i = 0; i < quote.originChainsOperations.length; i++) {
       const signedOperation = await signOperation(
-        quote.originChainsOperations[i],
+        quote.originChainsOperations[i] as ChainOperation,
         sessionKey.privateKey,
         ContractAccountType.RoleBased, // Use role-based signing
       );

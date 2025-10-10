@@ -244,7 +244,7 @@ async function simpleSwapRoleBased(swapParams: SwapParams) {
         id: quote.id,
         from: `${fromAmount} ${swapParams.fromAssetId}`,
         willReceive: quote.destinationToken
-          ? `${formatUnits(BigInt(quote.destinationToken.amount), 18)} ${swapParams.toAssetId}`
+          ? `${formatUnits(BigInt(quote.destinationToken.amount), swapParams.decimals || 18)} ${swapParams.toAssetId}`
           : 'Unknown amount',
         fiatValue: quote.destinationToken
           ? `$${quote.destinationToken.fiatValue}`
