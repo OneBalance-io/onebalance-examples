@@ -21,7 +21,6 @@ pnpm run transfer:simple-role-based   # Transfer with role-based account
 pnpm run calldata:standard-account    # V3 calldata (recommended)
 pnpm run calldata:euler-vault-v3      # V3 Euler vault deposit/withdraw
 pnpm run calldata:euler-vault-v1      # V1 Euler vault deposit/withdraw
-pnpm run calldata                     # V1 calldata (legacy)
 
 # Other examples
 pnpm run eip-7702                     # EIP-7702 delegation
@@ -35,7 +34,6 @@ pnpm run solana-swap                  # Solana-specific swap
 - **`calldata/`** - V3 calldata examples with Standard accounts
 - **`eip-7702/`** - Atomic cross-chain execution with EIP-7702 delegation
 - **`solana/`** - Solana-specific swap operations
-- **`onebalance-calldata/`** - V1 ERC20 transfers and balance checking (legacy)
 
 ## Setup
 
