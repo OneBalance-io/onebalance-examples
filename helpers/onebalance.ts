@@ -20,6 +20,10 @@ import {
   AggregatedAsset,
   AggregatedAssetBalance,
   SupportedChain,
+  PrepareCallRequestV3,
+  TargetCallQuoteV3,
+  CallRequestV3,
+  CallQuoteResponseV3,
 } from './types';
 import { apiPost, apiGet } from './api';
 
@@ -143,4 +147,18 @@ export async function listAggregatedAssets(): Promise<AggregatedAsset[]> {
 // List supported chains
 export async function listSupportedChains(): Promise<SupportedChain[]> {
   return apiGet<{}, SupportedChain[]>('/api/chains/supported-list', {});
+}
+
+// V3 calldata endpoints
+export async function prepareCallQuoteV3(
+  quoteRequest: PrepareCallRequestV3,
+): Promise<TargetCallQuoteV3> {
+  return apiPost<PrepareCallRequestV3, TargetCallQuoteV3>(
+    '/api/v3/quote/prepare-call-quote',
+    quoteRequest,
+  );
+}
+
+export async function fetchCallQuoteV3(callRequest: CallRequestV3): Promise<CallQuoteResponseV3> {
+  return apiPost<CallRequestV3, CallQuoteResponseV3>('/api/v3/quote/call-quote', callRequest);
 }

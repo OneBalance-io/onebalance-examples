@@ -7,22 +7,35 @@ Examples for integrating with the OneBalance API to enable cross-chain asset man
 ```bash
 pnpm install
 
-# Run examples
-pnpm run swap:simple                  # Swap with basic account
+# Swap examples
+pnpm run swap:simple                  # Swap with standard account
 pnpm run swap:simple-role-based       # Swap with role-based account
-pnpm run transfer:simple              # Transfer with basic account
+pnpm run swap:basic                   # Standard account swap example
+pnpm run swap:role-based              # Role-based swap example
+
+# Transfer examples
+pnpm run transfer:simple              # Transfer with standard account
 pnpm run transfer:simple-role-based   # Transfer with role-based account
-pnpm run eip-7702
+
+# Calldata examples
+pnpm run calldata:standard-account    # V3 calldata (recommended)
+pnpm run calldata:euler-vault-v3      # V3 Euler vault deposit/withdraw
+pnpm run calldata:euler-vault-v1      # V1 Euler vault deposit/withdraw
+pnpm run calldata                     # V1 calldata (legacy)
+
+# Other examples
+pnpm run eip-7702                     # EIP-7702 delegation
+pnpm run solana-swap                  # Solana-specific swap
 ```
 
 ## Examples
 
 - **`swap/`** - Cross-chain swap examples with different account types
 - **`transfer/`** - Asset transfer examples with recipient specification (CAIP-10)
-- **`calldata/`** - V3 calldata examples with Basic accounts
-- **`onebalance-calldata/`** - V1 ERC20 transfers and balance checking (legacy)
-- **`eip-7702/`** - Atomic cross-chain execution with delegation
+- **`calldata/`** - V3 calldata examples with Standard accounts
+- **`eip-7702/`** - Atomic cross-chain execution with EIP-7702 delegation
 - **`solana/`** - Solana-specific swap operations
+- **`onebalance-calldata/`** - V1 ERC20 transfers and balance checking (legacy)
 
 ## Setup
 

@@ -27,6 +27,8 @@ export {
   fetchExecutionStatus,
   listAggregatedAssets,
   listSupportedChains,
+  prepareCallQuoteV3,
+  fetchCallQuoteV3,
 } from './onebalance';
 
 // Signing helpers
