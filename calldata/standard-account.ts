@@ -21,7 +21,7 @@ import {
 } from '../helpers/types';
 
 /**
- * Simple calldata example using V3 endpoints with a Basic account (kernel-v3.1-ecdsa)
+ * Simple calldata example using V3 endpoints with a Standard account (kernel-v3.1-ecdsa)
  *
  * This example shows:
  * 1. Loading a session key (session2)

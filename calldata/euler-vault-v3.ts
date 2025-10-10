@@ -344,27 +344,6 @@ async function executeAndMonitor(
 ): Promise<void> {
   console.log('📋 Step 8: Executing quote...');
 
-  // ========================================================================
-  // SUP-231 CLIENT-SIDE WORKAROUND DOES NOT WORK
-  // ========================================================================
-  // The API returns "account" (singular) but execute endpoint expects "accounts" (array)
-  //
-  // We tried transforming the response structure, but it fails with:
-  // "Incorrect tamper proof signature" because the backend signs the original
-  // structure (with 'account'), and modifying it breaks signature validation.
-  //
-  // CONCLUSION: SUP-231 requires a backend fix. No client-side workaround possible.
-  //
-  // Uncommenting this code will demonstrate the signature validation failure:
-  //
-  // const quoteWithFix = quote as any;
-  // if (quoteWithFix.account && !quoteWithFix.accounts) {
-  //   console.log('⚠️  Applying SUP-231 workaround: Converting account → accounts');
-  //   quoteWithFix.accounts = [quoteWithFix.account];
-  //   delete quoteWithFix.account;
-  // }
-  // ========================================================================
-
   const result = await executeQuoteV3(quote as any);
 
   if (!result.success) {

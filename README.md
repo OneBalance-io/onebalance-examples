@@ -8,13 +8,13 @@ Examples for integrating with the OneBalance API to enable cross-chain asset man
 pnpm install
 
 # Swap examples
-pnpm run swap:simple                  # Swap with basic account
+pnpm run swap:simple                  # Swap with standard account
 pnpm run swap:simple-role-based       # Swap with role-based account
-pnpm run swap:basic                   # Basic swap example
+pnpm run swap:basic                   # Standard account swap example
 pnpm run swap:role-based              # Role-based swap example
 
 # Transfer examples
-pnpm run transfer:simple              # Transfer with basic account
+pnpm run transfer:simple              # Transfer with standard account
 pnpm run transfer:simple-role-based   # Transfer with role-based account
 
 # Calldata examples
@@ -32,7 +32,7 @@ pnpm run solana-swap                  # Solana-specific swap
 
 - **`swap/`** - Cross-chain swap examples with different account types
 - **`transfer/`** - Asset transfer examples with recipient specification (CAIP-10)
-- **`calldata/`** - V3 calldata examples with Basic accounts
+- **`calldata/`** - V3 calldata examples with Standard accounts
 - **`eip-7702/`** - Atomic cross-chain execution with EIP-7702 delegation
 - **`solana/`** - Solana-specific swap operations
 - **`onebalance-calldata/`** - V1 ERC20 transfers and balance checking (legacy)

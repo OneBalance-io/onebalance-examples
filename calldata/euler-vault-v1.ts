@@ -288,36 +288,6 @@ async function getSignedCallQuote(
 
   console.log('✅ Chain operation signed\n');
 
-  // ========================================================================
-  // WORKAROUND ATTEMPT for SUP-200 (COMMENTED OUT - DOESN'T WORK)
-  // ========================================================================
-  // We tried patching fiatValue locally and sending it to the backend, but:
-  // 1. The backend IGNORES client-provided sourceAssetBalances
-  // 2. The backend INDEPENDENTLY fetches relay pricing (even for same-chain ops)
-  // 3. No client-side workaround can fix this - backend must be changed
-  //
-  // const preparedQuoteWithBalances = preparedQuote as TargetCallQuote & {
-  //   sourceAssetBalances?: Array<{
-  //     assetType: string;
-  //     balance: string;
-  //     decimals: number;
-  //     fiatValue: number;
-  //   }>;
-  // };
-  //
-  // if (preparedQuoteWithBalances.sourceAssetBalances) {
-  //   const zeroFiatAsset = preparedQuoteWithBalances.sourceAssetBalances.find(
-  //     (asset) => asset.fiatValue === 0 || asset.fiatValue === null,
-  //   );
-  //
-  //   if (zeroFiatAsset) {
-  //     const fallbackPrice = 1.09;
-  //     const balance = Number(zeroFiatAsset.balance) / Math.pow(10, zeroFiatAsset.decimals);
-  //     zeroFiatAsset.fiatValue = balance * fallbackPrice;
-  //   }
-  // }
-  // ========================================================================
-
   console.log('📋 Step 6: Getting call quote...');
 
   const callRequest: CallRequest = {
