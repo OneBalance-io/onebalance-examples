@@ -25,13 +25,13 @@ export interface RoleBasedAccount {
   accountAddress: Hex;
 }
 
-export interface BasicAccount {
+export interface StandardAccount {
   type: 'kernel-v3.1-ecdsa';
   signerAddress: Hex;
   accountAddress: Hex;
 }
 
-export interface KernelV33Account {
+export interface EIP7702Account {
   type: 'kernel-v3.3-ecdsa';
   deploymentType: 'EIP7702';
   accountAddress: Hex;
@@ -43,7 +43,7 @@ export interface SolanaAccount {
   accountAddress: string;
 }
 
-export type Account = RoleBasedAccount | BasicAccount | KernelV33Account | SolanaAccount;
+export type Account = RoleBasedAccount | StandardAccount | EIP7702Account | SolanaAccount;
 
 // Predict Address Types
 export interface PredictAddressRoleBasedRequest {
@@ -51,7 +51,7 @@ export interface PredictAddressRoleBasedRequest {
   adminAddress: Hex;
 }
 
-export interface PredictAddressBasicRequest {
+export interface PredictAddressStandardRequest {
   type: string;
   signerAddress: Hex;
 }

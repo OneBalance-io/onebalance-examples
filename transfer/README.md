@@ -4,13 +4,13 @@ Examples showing how to transfer assets to specific recipient addresses using CA
 
 ## Examples
 
-- **`simple-transfer.ts`** - Transfer with basic account (kernel-v3.1-ecdsa)
+- **`simple-transfer.ts`** - Transfer with standard account (kernel-v3.1-ecdsa)
 - **`simple-transfer-role-based.ts`** - Transfer with role-based account (dual-key)
 
 ## How to Run
 
 ```bash
-# Basic account transfer
+# Standard account transfer
 pnpm run transfer:simple
 
 # Role-based account transfer
@@ -91,7 +91,7 @@ The `simple-transfer-role-based.ts` intelligently chooses API versions:
     }
     ```
 
-### Basic Account Transfers
+### Standard Account Transfers
 The `simple-transfer.ts` always uses V3 API for all operations.
 
 ## Transfer Flow
@@ -106,7 +106,7 @@ The `simple-transfer.ts` always uses V3 API for all operations.
 
 ## Example Usage
 
-### Basic Transfer (Simple)
+### Standard Transfer (Simple)
 
 ```typescript
 import { simpleTransfer } from './transfer/simple-transfer';

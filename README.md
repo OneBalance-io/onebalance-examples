@@ -10,7 +10,7 @@ pnpm install
 # Swap examples
 pnpm run swap:simple                  # Swap with standard account
 pnpm run swap:simple-role-based       # Swap with role-based account
-pnpm run swap:basic                   # Standard account swap example
+pnpm run swap:standard-account        # Standard account swap example
 pnpm run swap:role-based              # Role-based swap example
 
 # Transfer examples

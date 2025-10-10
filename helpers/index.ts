@@ -13,7 +13,7 @@ export {
 // OneBalance helpers
 export {
   predictAddress,
-  predictBasicAddress,
+  predictStandardAddress,
   prepareCallQuote,
   fetchCallQuote,
   getQuote,

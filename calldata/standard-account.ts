@@ -1,7 +1,7 @@
 import { parseAbi, encodeFunctionData } from 'viem';
 import {
   readOrCacheEOAKey,
-  predictBasicAddress,
+  predictStandardAddress,
   prepareCallQuoteV3,
   fetchCallQuoteV3,
   executeQuoteV3,
@@ -11,7 +11,7 @@ import {
 } from '../helpers';
 import {
   Hex,
-  BasicAccount,
+  StandardAccount,
   PrepareCallRequestV3,
   CallRequestV3,
   ContractAccountType,
@@ -41,16 +41,16 @@ const TRANSFER_AMOUNT = '10000'; // 0.01 USDC
 /**
  * Step 1: Load signer key and create account
  */
-async function loadAccount(): Promise<{ signerKey: EOAKeyPair; account: BasicAccount }> {
+async function loadAccount(): Promise<{ signerKey: EOAKeyPair; account: StandardAccount }> {
   console.log('📋 Step 1: Loading account...');
 
   const signerKey = readOrCacheEOAKey('session2');
-  const accountAddress = await predictBasicAddress('kernel-v3.1-ecdsa', signerKey.address);
+  const accountAddress = await predictStandardAddress('kernel-v3.1-ecdsa', signerKey.address);
 
   console.log(`Signer Address: ${signerKey.address}`);
   console.log(`Account Address: ${accountAddress}\n`);
 
-  const account: BasicAccount = {
+  const account: StandardAccount = {
     type: 'kernel-v3.1-ecdsa',
     signerAddress: signerKey.address as Hex,
     accountAddress: accountAddress as Hex,
@@ -95,7 +95,7 @@ function prepareTransferCalldata(recipientAddress: Hex): Hex {
  * Step 4: Prepare the call quote using V3 endpoint
  */
 async function preparePrepareCallQuote(
-  account: BasicAccount,
+  account: StandardAccount,
   transferData: Hex,
 ): Promise<TargetCallQuoteV3> {
   console.log('📋 Step 4: Preparing call quote...');
@@ -133,7 +133,7 @@ async function preparePrepareCallQuote(
  * Step 5-6: Sign the chain operation and get the final call quote
  */
 async function getSignedCallQuote(
-  account: BasicAccount,
+  account: StandardAccount,
   preparedQuote: TargetCallQuoteV3,
   signerKey: EOAKeyPair,
 ): Promise<CallQuoteResponseV3> {

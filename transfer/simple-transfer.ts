@@ -1,5 +1,5 @@
 /**
- * Simple Transfer Example with Basic Account (Kernel v3.1)
+ * Simple Transfer Example with Standard Account (Kernel v3.1)
  *
  * This example shows how to transfer assets to a specific recipient account
  * using the CAIP-10 format for the recipient address.
@@ -32,7 +32,7 @@ interface TransferParams {
 }
 
 /**
- * Simple transfer function using basic account (kernel-v3.1-ecdsa)
+ * Simple transfer function using standard account (kernel-v3.1-ecdsa)
  *
  * @param transferParams - The transfer parameters
  */

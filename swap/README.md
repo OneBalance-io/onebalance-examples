@@ -5,8 +5,8 @@ Simple examples showing how to perform swaps using OneBalance's aggregated asset
 ## Examples
 
 - **`role-based.ts`** - Role-based account swap (dual-key)
-- **`basic.ts`** - Basic account swap (single-key)  
-- **`simple-swap.ts`** - Universal swap function with basic account (kernel-v3.1-ecdsa)
+- **`standard-account.ts`** - Standard account swap (single-key)  
+- **`simple-swap.ts`** - Universal swap function with standard account (kernel-v3.1-ecdsa)
 - **`simple-swap-role-based.ts`** - Universal swap function with role-based account (dual-key)
 
 ## How to Run
@@ -15,10 +15,10 @@ Simple examples showing how to perform swaps using OneBalance's aggregated asset
 # Role-based account example
 pnpm run swap:role-based
 
-# Basic account example  
-pnpm run swap:basic
+# Standard account example  
+pnpm run swap:standard-account
 
-# Simple swap examples (basic account)
+# Simple swap examples (standard account)
 pnpm run swap:simple
 
 # Simple swap examples (role-based account)
@@ -43,7 +43,7 @@ pnpm run swap:simple-role-based
 - **API Version**: V1 for EVM-only, V3 when Solana is involved
 - **Use Case**: Enhanced security with backup admin
 
-### Basic Account (Kernel v3.1)
+### Standard Account (Kernel v3.1)
 - **Simplicity**: Single-key architecture
 - **Signing**: UserOperation hash (signMessage)
 - **API Version**: V3 for all operations

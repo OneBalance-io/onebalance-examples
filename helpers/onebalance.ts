@@ -8,7 +8,7 @@ import {
   ExecutionStatusResponse,
   Hex,
   PredictAddressRoleBasedRequest,
-  PredictAddressBasicRequest,
+  PredictAddressStandardRequest,
   PredictAddressResponse,
   QuoteRequestV1,
   QuoteResponseV1,
@@ -43,8 +43,8 @@ export async function predictAddress(
   return response.predictedAddress;
 }
 
-export async function predictBasicAddress(type: string, signerAddress: string): Promise<string> {
-  const response = await apiPost<PredictAddressBasicRequest, PredictAddressResponse>(
+export async function predictStandardAddress(type: string, signerAddress: string): Promise<string> {
+  const response = await apiPost<PredictAddressStandardRequest, PredictAddressResponse>(
     '/api/account/predict-address',
     {
       type,

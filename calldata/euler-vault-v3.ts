@@ -1,7 +1,7 @@
 import { encodeFunctionData } from 'viem';
 import {
   readOrCacheEOAKey,
-  predictBasicAddress,
+  predictStandardAddress,
   prepareCallQuoteV3,
   fetchCallQuoteV3,
   executeQuoteV3,
@@ -66,7 +66,7 @@ async function loadAccount(): Promise<{ signerKey: EOAKeyPair; account: EvmAccou
   console.log('📋 Step 1: Loading account...');
 
   const signerKey = readOrCacheEOAKey('session2');
-  const accountAddress = await predictBasicAddress('kernel-v3.1-ecdsa', signerKey.address);
+  const accountAddress = await predictStandardAddress('kernel-v3.1-ecdsa', signerKey.address);
 
   console.log(`Signer Address: ${signerKey.address}`);
   console.log(`Account Address: ${accountAddress}\n`);
