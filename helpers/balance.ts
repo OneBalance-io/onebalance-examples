@@ -7,6 +7,16 @@ import { isSolanaAsset, formatSolanaAssetSymbol } from './solana';
  */
 
 /**
+ * Helper to detect if an address is a Solana address
+ * Solana addresses are base58 encoded and don't start with 0x
+ */
+function isSolanaAddress(address: string): boolean {
+  // Ethereum addresses start with 0x and are 42 characters
+  // Solana addresses are base58 and typically 32-44 characters without 0x
+  return !address.startsWith('0x') && address.length >= 32 && address.length <= 44;
+}
+
+/**
  * Universal balance checker that works with both aggregated assets and regular asset IDs
  * Supports both EVM and Solana accounts automatically
  *
@@ -23,17 +33,21 @@ export async function checkAssetBalance(
   try {
     console.log(`🔍 Checking balance for asset: ${assetId}...`);
 
-    // Determine account format based on asset type
+    // Determine account format based on account address type
     let accountIdentifier: string;
-    if (assetId.startsWith('solana:') || assetId.includes('solana')) {
-      // For Solana assets, use the account address directly
-      accountIdentifier = accountAddress;
+    const isSolana = isSolanaAddress(accountAddress);
+
+    if (isSolana) {
+      // For Solana accounts, use solana: prefix
+      accountIdentifier = accountAddress.startsWith('solana:')
+        ? accountAddress
+        : `solana:${accountAddress}`;
     } else if (assetId.startsWith('eip155:')) {
       // For chain-specific EIP-155 assets, extract the chain ID
       const chainId = assetId.split('/')[0]; // Gets 'eip155:42161' from 'eip155:42161/erc20:...'
       accountIdentifier = `${chainId}:${accountAddress}`;
     } else {
-      // For aggregated assets or other cases, use Arbitrum as default chain
+      // For aggregated assets or other cases, use Arbitrum as default chain for EVM
       accountIdentifier = `eip155:42161:${accountAddress}`;
     }
 
@@ -107,6 +121,66 @@ export async function checkAssetBalance(
     return formattedBalance;
   } catch (error) {
     console.error(`Failed to check balance for ${assetId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Checks aggregated asset balance across both EVM and Solana accounts
+ *
+ * @param evmAccountAddress - The EVM account address
+ * @param solanaAccountAddress - The Solana account address
+ * @param aggregatedAssetId - The aggregated asset ID (e.g., 'ob:usdc')
+ * @param decimals - Number of decimals for the asset (default: 18)
+ * @returns The total balance across both chains
+ */
+export async function checkCrossChainBalance(
+  evmAccountAddress: string,
+  solanaAccountAddress: string,
+  aggregatedAssetId: string,
+  decimals: number = 18,
+): Promise<number> {
+  try {
+    console.log(`🔍 Checking cross-chain balance for ${aggregatedAssetId}...`);
+
+    // Format account identifier for multi-chain query
+    const accountIdentifier = `eip155:42161:${evmAccountAddress},solana:${solanaAccountAddress}`;
+
+    const response = await fetchAggregatedBalanceV3(accountIdentifier, aggregatedAssetId);
+
+    const aggregatedBalance = response.balanceByAggregatedAsset?.find(
+      (asset) => asset.aggregatedAssetId === aggregatedAssetId,
+    );
+
+    if (!aggregatedBalance) {
+      console.log(`❌ No balance found for ${aggregatedAssetId}`);
+      return 0;
+    }
+
+    const formattedBalance = parseFloat(formatUnits(BigInt(aggregatedBalance.balance), decimals));
+    const symbol = aggregatedAssetId.replace('ob:', '').toUpperCase();
+
+    console.log(`💰 Total ${symbol} balance: ${formattedBalance.toFixed(6)}`);
+    console.log(`   EVM chains: ${response.accounts?.evm || evmAccountAddress}`);
+    console.log(`   Solana: ${response.accounts?.solana || solanaAccountAddress}`);
+
+    // Show breakdown by chain
+    if (aggregatedBalance.individualAssetBalances?.length > 0) {
+      console.log(`\n   Distribution:`);
+      aggregatedBalance.individualAssetBalances.forEach((balance) => {
+        if (parseFloat(balance.balance) > 0) {
+          const chainBalance = parseFloat(formatUnits(BigInt(balance.balance), decimals));
+          const chainName = balance.assetType.includes('solana')
+            ? 'Solana'
+            : balance.assetType.split('/')[0].replace('eip155:', 'Chain ');
+          console.log(`     ${chainName}: ${chainBalance.toFixed(6)} ${symbol}`);
+        }
+      });
+    }
+
+    return formattedBalance;
+  } catch (error) {
+    console.error(`Failed to check cross-chain balance:`, error);
     throw error;
   }
 }

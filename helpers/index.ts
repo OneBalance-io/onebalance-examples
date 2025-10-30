@@ -43,7 +43,12 @@ export {
 } from './solana';
 
 // Balance helpers
-export { checkAssetBalance, checkMultipleAssetBalances, formatBalanceDisplay } from './balance';
+export {
+  checkAssetBalance,
+  checkCrossChainBalance,
+  checkMultipleAssetBalances,
+  formatBalanceDisplay,
+} from './balance';
 
 // Account helpers
 export {

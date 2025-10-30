@@ -168,6 +168,7 @@ export async function signOperation(
  * @param signerKey - EVM signer key for signing EVM operations
  * @param solanaKeypair - Solana keypair for signing Solana operations
  * @param solanaAccount - Solana account information
+ * @param accountType - EVM account type (default: KernelV31)
  * @returns The quote with all operations signed
  */
 export async function signAllOperations(
@@ -175,6 +176,7 @@ export async function signAllOperations(
   signerKey: EOAKeyPair,
   solanaKeypair: Keypair | null,
   solanaAccount: SolanaAccount | null,
+  accountType: ContractAccountType = ContractAccountType.KernelV31,
 ): Promise<QuoteResponseV3> {
   console.log('🔐 Signing operations...');
 
@@ -192,11 +194,7 @@ export async function signAllOperations(
       quote.originChainsOperations[i] = signedOperation;
     } else if ('userOp' in operation && 'typedDataToSign' in operation) {
       // Sign EVM operation
-      const signedOperation = await signOperation(
-        operation,
-        signerKey.privateKey,
-        ContractAccountType.KernelV31,
-      );
+      const signedOperation = await signOperation(operation, signerKey.privateKey, accountType);
       quote.originChainsOperations[i] = signedOperation;
     }
   }
