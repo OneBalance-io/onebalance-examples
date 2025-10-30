@@ -4,12 +4,11 @@ Demonstrates cross-chain USDC transfers using EIP-7702 delegation with OneBalanc
 
 ## What is EIP-7702?
 
-EIP-7702 enables EOAs to gain smart account capabilities through delegation. Your wallet address stays the same while gaining features like gas abstraction and atomic cross-chain execution.
+EIP-7702 enables EOAs to gain smart account capabilities through delegation. Your wallet address stays the same while gaining features like gas abstraction and cross-chain execution.
 
 **Key Benefits:**
 
 - ✅ No address changes - use your existing EOA
-- ✅ Atomic execution - delegation + bridging + contract calls in one transaction
 - ✅ Gas abstraction - sponsored transactions
 
 ## Examples
