@@ -13,7 +13,7 @@ import {
 } from '../helpers';
 
 /**
- * Simple EIP-7702 swap for debugging token swaps
+ * Simple EIP-7702 token swap
  * Reusable function - just pass from/to assets and amount
  */
 async function eip7702Swap(
@@ -98,7 +98,7 @@ async function eip7702Swap(
 }
 
 /**
- * Main - examples for debugging
+ * Main - swap examples
  */
 async function main() {
   try {

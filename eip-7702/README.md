@@ -29,6 +29,16 @@ Bidirectional USDC transfers between Solana and Polygon using EIP-7702 + Solana 
 npx tsx eip-7702/solana-transfer-to-polygon.ts
 ```
 
+### 3. Token Swap (`swap.ts`)
+
+Simple reusable swap function for EIP-7702 token swaps. Pass any token pair + amount.
+
+```bash
+pnpm run eip-7702:swap
+```
+
+Example: RESOLV ↔ ob:usdc on BSC demonstrating aggregated asset routing.
+
 ## Setup
 
 ### 1. Create EVM Key
@@ -108,4 +118,5 @@ const quoteRequest: QuoteRequestV3 = {
 
 - `index.ts` - Basic EIP-7702 transfer
 - `solana-transfer-to-polygon.ts` - Solana ↔ Polygon bidirectional transfers
+- `swap.ts` - Reusable token swap function
 - `../helpers/` - Shared OneBalance API functions and types
