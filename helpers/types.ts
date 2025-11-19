@@ -71,6 +71,8 @@ export interface SwapParams {
   toAssetId: string;
   amount: string;
   decimals?: number;
+  slippageTolerance?: number;
+  recipientAccount?: string;
 }
 
 // Aggregated asset information

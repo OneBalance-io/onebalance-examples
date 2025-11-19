@@ -36,7 +36,10 @@ async function simpleSwap(swapParams: SwapParams) {
 
     // Step 3: Get quote
     console.log('\n📋 Getting quote...');
-    const quoteRequest = buildQuoteRequest(swapParams, accounts);
+    const quoteRequest = buildQuoteRequest(swapParams, accounts, {
+      slippageTolerance: swapParams.slippageTolerance,
+      recipientAccount: swapParams.recipientAccount,
+    });
     console.log('Quote Request:', JSON.stringify(quoteRequest, null, 2));
 
     const quote = await getQuoteV3(quoteRequest);
@@ -50,7 +53,7 @@ async function simpleSwap(swapParams: SwapParams) {
       id: quote.id,
       from: `${fromAmount} ${swapParams.fromAssetId}`,
       willReceive: quote.destinationToken
-        ? `${formatUnits(BigInt(quote.destinationToken.amount), 18)} ${swapParams.toAssetId}`
+        ? `${formatUnits(BigInt(quote.destinationToken.amount), quote.destinationToken.decimals || 18)} ${swapParams.toAssetId}`
         : 'Unknown amount',
       fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
     });
@@ -121,12 +124,23 @@ async function main() {
     // });
 
     // Example 6: Swap from aggregated USDC to JUP on Solana
+    // await simpleSwap({
+    //   fromAssetId: 'ob:usdc',
+    //   toAssetId:
+    //     'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
+    //   amount: parseUnits('0.7', 6).toString(),
+    //   decimals: 6,
+    // });
+
+    // Example 7: Swap from Solana Mango to Base USDC
     await simpleSwap({
-      fromAssetId: 'ob:usdc',
-      toAssetId:
-        'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
-      amount: parseUnits('0.7', 6).toString(),
+      fromAssetId:
+        'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
+      toAssetId: 'eip155:8453/erc20:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+      amount: parseUnits('6', 6).toString(),
       decimals: 6,
+      slippageTolerance: 100,
+      recipientAccount: 'eip155:8453:0xbb3b207d38E7dcEE4053535fdEA42D6b8D3477Da',
     });
   } catch (error) {
     console.error('Operation failed:', error);
