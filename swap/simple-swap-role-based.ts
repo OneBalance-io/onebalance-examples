@@ -21,6 +21,7 @@ import {
   executeQuoteV3,
   monitorTransactionCompletion,
   checkAssetBalance,
+  displaySwapQuote,
   SwapParams,
   predictAddress,
   RoleBasedAccount,
@@ -240,15 +241,12 @@ async function simpleSwapRoleBased(swapParams: SwapParams) {
 
       const quote = await getQuoteV3(quoteRequestV3);
 
-      console.log('✅ Quote received (V3):', {
-        id: quote.id,
-        from: `${fromAmount} ${swapParams.fromAssetId}`,
-        willReceive: quote.destinationToken
-          ? `${formatUnits(BigInt(quote.destinationToken.amount), swapParams.decimals || 18)} ${swapParams.toAssetId}`
-          : 'Unknown amount',
-        fiatValue: quote.destinationToken
-          ? `$${quote.destinationToken.fiatValue}`
-          : 'Unknown value',
+      displaySwapQuote({
+        quote,
+        fromAssetId: swapParams.fromAssetId,
+        toAssetId: swapParams.toAssetId,
+        fromAmount: swapParams.amount,
+        fromDecimals: swapParams.decimals,
       });
 
       // Sign all operations (EVM with signTypedData + Solana)
@@ -288,15 +286,12 @@ async function simpleSwapRoleBased(swapParams: SwapParams) {
 
       const quote = await getQuote(quoteRequestV1);
 
-      console.log('✅ Quote received (V1):', {
-        id: quote.id,
-        from: `${fromAmount} ${swapParams.fromAssetId}`,
-        willReceive: quote.destinationToken
-          ? `${formatUnits(BigInt(quote.destinationToken.amount), 18)} ${swapParams.toAssetId}`
-          : 'Unknown amount',
-        fiatValue: quote.destinationToken
-          ? `$${quote.destinationToken.fiatValue}`
-          : 'Unknown value',
+      displaySwapQuote({
+        quote,
+        fromAssetId: swapParams.fromAssetId,
+        toAssetId: swapParams.toAssetId,
+        fromAmount: swapParams.amount,
+        fromDecimals: swapParams.decimals,
       });
 
       // Sign all operations (EVM only with signTypedData)

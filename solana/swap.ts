@@ -8,6 +8,7 @@ import {
   getQuoteV3,
   executeQuoteV3,
   signSolanaOperation,
+  displaySwapQuote,
   QuoteRequestV3,
   SolanaOperation,
 } from '../helpers';
@@ -99,12 +100,12 @@ async function swapSOLtoUSDC() {
 
     const quote = await getQuoteV3(quoteRequest as QuoteRequestV3);
 
-    console.log('✅ Quote received:', {
-      id: quote.id,
-      willReceive: quote.destinationToken
-        ? `${formatUnits(BigInt(quote.destinationToken.amount), 6)} USDC`
-        : 'Unknown amount',
-      fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
+    displaySwapQuote({
+      quote,
+      fromAssetId: SOL_ASSET_ID,
+      toAssetId: USDC_SOLANA_ASSET_ID,
+      fromAmount: parseUnits(swapAmount.toString(), 9).toString(),
+      fromDecimals: 9,
     });
 
     // Step 2: Sign the Solana operation

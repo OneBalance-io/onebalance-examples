@@ -1,4 +1,4 @@
-import { formatUnits, parseUnits } from 'viem';
+import { parseUnits } from 'viem';
 import {
   readOrCacheEOAKey,
   loadSolanaKey,
@@ -7,6 +7,7 @@ import {
   monitorTransactionCompletion,
   signAllOperations,
   checkAssetBalance,
+  displayTransferQuote,
   type EIP7702Account,
   type SolanaAccount,
   type QuoteRequestV3,
@@ -77,12 +78,12 @@ async function transferSolanaToPolygon(
 
   const quote = await getQuoteV3(quoteRequest);
 
-  console.log('✅ Quote received:', {
-    id: quote.id,
-    willReceive: quote.destinationToken
-      ? `${formatUnits(BigInt(quote.destinationToken.amount), 6)} USDC`
-      : 'Unknown amount',
-    fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
+  displayTransferQuote({
+    quote,
+    assetId: USDC_SOLANA_ASSET_ID,
+    amount: parseUnits(amount.toString(), 6).toString(),
+    decimals: 6,
+    recipientAccount: `eip155:137:${eip7702Account.accountAddress}`,
   });
 
   return quote;
@@ -140,12 +141,12 @@ async function transferPolygonToSolana(
 
   const quote = await getQuoteV3(quoteRequest);
 
-  console.log('✅ Quote received:', {
-    id: quote.id,
-    willReceive: quote.destinationToken
-      ? `${formatUnits(BigInt(quote.destinationToken.amount), 6)} USDC`
-      : 'Unknown amount',
-    fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
+  displayTransferQuote({
+    quote,
+    assetId: USDC_POLYGON_ASSET_ID,
+    amount: parseUnits(amount.toString(), 6).toString(),
+    decimals: 6,
+    recipientAccount: `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:${solanaAccount.accountAddress}`,
   });
 
   return quote;

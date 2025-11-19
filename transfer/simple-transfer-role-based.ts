@@ -20,6 +20,7 @@ import {
   monitorTransactionCompletion,
   checkAssetBalance,
   predictAddress,
+  displayTransferQuote,
   RoleBasedAccount,
   SolanaAccount,
   Account,
@@ -230,14 +231,12 @@ async function simpleTransferRoleBased(transferParams: TransferParams) {
 
       const quote = await getQuoteV3(transferRequestV3);
 
-      console.log('✅ Quote received (V3):', {
-        id: quote.id,
-        sending: `${transferAmount} ${transferParams.assetId}`,
-        to: transferParams.recipientAccount,
-        willReceive: quote.destinationToken
-          ? `${formatUnits(BigInt(quote.destinationToken.amount), transferParams.decimals || 18)}`
-          : 'Unknown amount',
-        fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown',
+      displayTransferQuote({
+        quote,
+        assetId: transferParams.assetId,
+        amount: transferParams.amount,
+        decimals: transferParams.decimals,
+        recipientAccount: transferParams.recipientAccount,
       });
 
       const signedQuote = await signAllRoleBasedOperationsV3(
@@ -276,14 +275,12 @@ async function simpleTransferRoleBased(transferParams: TransferParams) {
 
       const quote = await getQuote(transferRequestV1);
 
-      console.log('✅ Quote received (V1):', {
-        id: quote.id,
-        sending: `${transferAmount} ${transferParams.assetId}`,
-        to: transferParams.recipientAccount,
-        willReceive: quote.destinationToken
-          ? `${formatUnits(BigInt(quote.destinationToken.amount), transferParams.decimals || 18)}`
-          : 'Unknown amount',
-        fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown',
+      displayTransferQuote({
+        quote,
+        assetId: transferParams.assetId,
+        amount: transferParams.amount,
+        decimals: transferParams.decimals,
+        recipientAccount: transferParams.recipientAccount,
       });
 
       const signedQuote = await signAllRoleBasedOperationsV1(quote, sessionKey);

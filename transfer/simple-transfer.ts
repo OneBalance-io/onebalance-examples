@@ -9,7 +9,7 @@
  *          solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:4yLyrKpdwhxFcBmjqkVXdqoH1NQFyTgufxP9LFjvKT1D
  */
 
-import { formatUnits, parseUnits } from 'viem';
+import { parseUnits } from 'viem';
 import {
   getQuoteV3,
   executeQuoteV3,
@@ -19,6 +19,7 @@ import {
   loadAccounts,
   signAllOperations,
   getBalanceCheckAddress,
+  displayTransferQuote,
 } from '../helpers';
 
 /**
@@ -77,18 +78,12 @@ async function simpleTransfer(transferParams: TransferParams) {
     const quote = await getQuoteV3(transferRequest);
 
     // Display transfer info
-    const transferAmount = transferParams.decimals
-      ? formatUnits(BigInt(transferParams.amount), transferParams.decimals)
-      : transferParams.amount;
-
-    console.log('✅ Quote received:', {
-      id: quote.id,
-      sending: `${transferAmount} ${transferParams.assetId}`,
-      to: transferParams.recipientAccount,
-      willReceive: quote.destinationToken
-        ? `${formatUnits(BigInt(quote.destinationToken.amount), transferParams.decimals || 18)}`
-        : 'Unknown amount',
-      fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
+    displayTransferQuote({
+      quote,
+      assetId: transferParams.assetId,
+      amount: transferParams.amount,
+      decimals: transferParams.decimals,
+      recipientAccount: transferParams.recipientAccount,
     });
 
     // Step 5: Sign all operations (EVM + Solana)

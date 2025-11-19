@@ -7,6 +7,7 @@ import {
   monitorTransactionCompletion,
   signOperation,
   predictStandardAddress,
+  displaySwapQuote,
   ContractAccountType,
 } from '../helpers';
 
@@ -104,12 +105,12 @@ async function swapUSDCtoAERO() {
     console.log('quoteRequest', JSON.stringify(quoteRequest, null, 2));
     const quote = await getQuoteV3(quoteRequest);
 
-    console.log('✅ Quote received:', {
-      id: quote.id,
-      willReceive: quote.destinationToken
-        ? `${formatUnits(BigInt(quote.destinationToken.amount), 18)} AERO`
-        : 'Unknown amount', // AERO has 18 decimals
-      fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
+    displaySwapQuote({
+      quote,
+      fromAssetId: 'ob:usdc',
+      toAssetId: 'ob:aero',
+      fromAmount: parseUnits(swapAmount.toString(), 6).toString(),
+      fromDecimals: 6,
     });
 
     // Step 2: Sign all chain operations

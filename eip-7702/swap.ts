@@ -1,4 +1,4 @@
-import { formatUnits, parseUnits } from 'viem';
+import { parseUnits } from 'viem';
 import {
   readOrCacheEOAKey,
   getQuoteV3,
@@ -6,6 +6,7 @@ import {
   monitorTransactionCompletion,
   signAllOperations,
   checkAssetBalance,
+  displaySwapQuote,
   type EIP7702Account,
   type QuoteRequestV3,
   type Hex,
@@ -61,15 +62,12 @@ async function eip7702Swap(
     console.log('Quote:', JSON.stringify(quote, null, 2));
 
     // Display quote info
-    const fromAmount = formatUnits(BigInt(amount), decimals);
-
-    console.log('✅ Quote received:', {
-      id: quote.id,
-      from: `${fromAmount} ${fromAssetId}`,
-      willReceive: quote.destinationToken
-        ? `${formatUnits(BigInt(quote.destinationToken.amount), quote.destinationToken.decimals || 18)} ${toAssetId}`
-        : 'Unknown',
-      fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown',
+    displaySwapQuote({
+      quote,
+      fromAssetId,
+      toAssetId,
+      fromAmount: amount,
+      fromDecimals: decimals,
     });
 
     // Step 4: Sign operations

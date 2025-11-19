@@ -75,5 +75,8 @@ export {
   waitForTransaction,
 } from './monitoring';
 
+// Display helpers
+export { displaySwapQuote, displayTransferQuote } from './display';
+
 // Types
 export * from './types';

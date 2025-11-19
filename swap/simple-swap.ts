@@ -1,4 +1,4 @@
-import { formatUnits, parseUnits } from 'viem';
+import { parseUnits } from 'viem';
 import {
   getQuoteV3,
   executeQuoteV3,
@@ -8,6 +8,7 @@ import {
   buildQuoteRequest,
   signAllOperations,
   getBalanceCheckAddress,
+  displaySwapQuote,
   SwapParams,
 } from '../helpers';
 
@@ -45,17 +46,12 @@ async function simpleSwap(swapParams: SwapParams) {
     const quote = await getQuoteV3(quoteRequest);
 
     // Display quote info
-    const fromAmount = swapParams.decimals
-      ? formatUnits(BigInt(swapParams.amount), swapParams.decimals)
-      : swapParams.amount;
-
-    console.log('✅ Quote received:', {
-      id: quote.id,
-      from: `${fromAmount} ${swapParams.fromAssetId}`,
-      willReceive: quote.destinationToken
-        ? `${formatUnits(BigInt(quote.destinationToken.amount), quote.destinationToken.decimals || 18)} ${swapParams.toAssetId}`
-        : 'Unknown amount',
-      fiatValue: quote.destinationToken ? `$${quote.destinationToken.fiatValue}` : 'Unknown value',
+    displaySwapQuote({
+      quote,
+      fromAssetId: swapParams.fromAssetId,
+      toAssetId: swapParams.toAssetId,
+      fromAmount: swapParams.amount,
+      fromDecimals: swapParams.decimals,
     });
 
     // Step 4: Sign all operations (EVM + Solana)
