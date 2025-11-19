@@ -57,6 +57,7 @@ export {
   getBalanceCheckAddress,
   type LoadAccountsResult,
   type LoadMultiChainAccountsResult,
+  type EvmAccountType,
 } from './account';
 
 // Quote helpers

@@ -1,58 +1,62 @@
 import { parseUnits } from 'viem';
 import {
-  readOrCacheEOAKey,
+  loadAccounts,
   getQuoteV3,
   executeQuoteV3,
   monitorTransactionCompletion,
   signAllOperations,
   checkAssetBalance,
   displaySwapQuote,
-  type EIP7702Account,
+  getBalanceCheckAddress,
   type QuoteRequestV3,
-  type Hex,
   ContractAccountType,
 } from '../helpers';
 
 /**
  * Simple EIP-7702 token swap
- * Reusable function - just pass from/to assets and amount
+ * Supports both EVM-only and cross-chain (EVM + Solana) swaps
  */
 async function eip7702Swap(
   fromAssetId: string,
   toAssetId: string,
   amount: string,
   decimals: number,
+  slippageTolerance: number = 100,
+  recipientAccount?: string,
 ) {
   try {
     console.log('🚀 Starting EIP-7702 swap...\n');
     console.log(`💱 ${fromAssetId} → ${toAssetId}`);
 
-    // Step 1: Load EIP-7702 account
-    const signerKey = readOrCacheEOAKey('session2');
-    const eip7702Account: EIP7702Account = {
-      type: 'kernel-v3.3-ecdsa',
-      deploymentType: 'EIP7702',
-      accountAddress: signerKey.address.toLowerCase() as Hex,
-      signerAddress: signerKey.address.toLowerCase() as Hex,
-    };
-
-    console.log('Account:', eip7702Account.accountAddress);
+    // Step 1: Load accounts (EIP-7702 + Solana if needed)
+    const { accounts, evmAccount, solanaAccount, signerKey, solanaKeypair } = await loadAccounts(
+      {
+        fromAssetId,
+        toAssetId,
+        amount,
+        decimals,
+      },
+      'session2',
+      'eip7702', // Use EIP-7702 account type
+    );
 
     // Step 2: Check balance
-    await checkAssetBalance(eip7702Account.accountAddress, fromAssetId, decimals);
+    const balanceAddress = getBalanceCheckAddress(fromAssetId, evmAccount, solanaAccount);
+    await checkAssetBalance(balanceAddress, fromAssetId, decimals);
 
     // Step 3: Get quote
     console.log('\n📋 Getting quote...');
     const quoteRequest: QuoteRequestV3 = {
       from: {
-        accounts: [eip7702Account],
+        accounts,
         asset: { assetId: fromAssetId },
         amount,
       },
       to: {
         asset: { assetId: toAssetId },
+        ...(recipientAccount && { account: recipientAccount }),
       },
-      slippageTolerance: 100, // 1%
+      slippageTolerance,
     };
 
     console.log('Request:', JSON.stringify(quoteRequest, null, 2));
@@ -74,8 +78,8 @@ async function eip7702Swap(
     const signedQuote = await signAllOperations(
       quote,
       signerKey,
-      null,
-      null,
+      solanaKeypair,
+      solanaAccount,
       ContractAccountType.KernelV33,
     );
 
@@ -109,11 +113,21 @@ async function main() {
     // );
 
     // Example 2: RESOLV to ob:usdc on BSC
+    // await eip7702Swap(
+    //   'eip155:56/erc20:0xda6cef7f667d992a60eb823ab215493aa0c6b360', // RESOLV on BSC
+    //   'ob:usdc',
+    //   parseUnits('3.4', 18).toString(), // RESOLV has 18 decimals
+    //   18,
+    // );
+
+    // Example 3: Solana Mango to Base USDC
     await eip7702Swap(
-      'eip155:56/erc20:0xda6cef7f667d992a60eb823ab215493aa0c6b360', // RESOLV on BSC
-      'ob:usdc',
-      parseUnits('3.4', 18).toString(), // RESOLV has 18 decimals
-      18,
+      'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
+      'eip155:8453/erc20:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC on Base
+      parseUnits('6', 6).toString(), // MNGO has 6 decimals
+      6,
+      100, // 1% slippage
+      'eip155:8453:0xbb3b207d38E7dcEE4053535fdEA42D6b8D3477Da', // Recipient account
     );
   } catch (error) {
     console.error('Failed:', error);
