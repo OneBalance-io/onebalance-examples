@@ -121,13 +121,23 @@ async function main() {
     // );
 
     // Example 3: Solana Mango to Base USDC
+    // await eip7702Swap(
+    //   'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
+    //   'eip155:8453/erc20:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC on Base
+    //   parseUnits('6', 6).toString(), // MNGO has 6 decimals
+    //   6,
+    //   100, // 1% slippage
+    //   'eip155:8453:0xbb3b207d38E7dcEE4053535fdEA42D6b8D3477Da', // Recipient account
+    // );
+
+    // Example 4: ob:usdc to USDC on Arbitrum
     await eip7702Swap(
-      'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
-      'eip155:8453/erc20:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC on Base
-      parseUnits('6', 6).toString(), // MNGO has 6 decimals
-      6,
-      100, // 1% slippage
-      'eip155:8453:0xbb3b207d38E7dcEE4053535fdEA42D6b8D3477Da', // Recipient account
+      'ob:usdc',
+      'eip155:42161/erc20:0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC on Arbitrum
+      parseUnits('1', 6).toString(),
+      6, // USDC has 6 decimals
+      50, // 0.5% slippage
+      'eip155:42161:0x46c0726a3a82ee887B2DfF336f05c760Ac6AeDcd', // Recipient account
     );
   } catch (error) {
     console.error('Failed:', error);
