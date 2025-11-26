@@ -363,6 +363,7 @@ export interface CallRequestV3 {
   chainOperation: ChainOperation;
   tamperProofSignature: string;
   fromAggregatedAssetId?: string;
+  fromAssetId?: string;
   slippageTolerance?: number;
 }
 
