@@ -119,7 +119,6 @@ async function depositToHyperLiquid(
     console.log('📋 Getting call quote with cross-chain routing...');
 
     const callRequest: CallRequestV3 = {
-      //   fromAggregatedAssetId: 'ob:usdc', // Pull from aggregated USDC across all chains
       fromAssetId: `${ARBITRUM_CHAIN}/erc20:${ARBITRUM_USDC}`,
       accounts,
       tamperProofSignature: preparedQuote.tamperProofSignature,
