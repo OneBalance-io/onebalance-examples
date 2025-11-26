@@ -20,54 +20,22 @@ import {
 } from '../helpers';
 
 /**
- * ═══════════════════════════════════════════════════════════════════════════
  * Smart Hyperliquid Deposit with EIP-7702 Account
- * ═══════════════════════════════════════════════════════════════════════════
  *
+ * Automatically detects fund distribution and routes to optimal flow:
  *
- * INTELLIGENT ROUTING:
- * ┌─────────────────────────────────────────────────────────────────┐
- * │ 1. Detect fund distribution across chains                       │
- * │ 2. Route to optimal flow based on detection:                    │
- * │                                                                  │
- * │    ┌─────────────┐                                              │
- * │    │  Detection  │                                              │
- * │    └──────┬──────┘                                              │
- * │           │                                                      │
- * │      ┌────┴────┐                                                │
- * │      │         │                                                │
- * │   SINGLE    MULTI                                               │
- * │   INPUT     INPUT                                               │
- * │      │         │                                                │
- * │   ┌──▼──┐   ┌──▼──┐                                            │
- * │   │FLOW │   │FLOW │                                            │
- * │   │  1  │   │  2  │                                            │
- * │   └─────┘   └─────┘                                            │
- * └─────────────────────────────────────────────────────────────────┘
+ * FLOW 1 (ATOMIC): Funds on 1 chain
+ *   → Direct calldata deposit, user stays as sender, bridge accepts
  *
- * FLOW 1: ATOMIC (single-input - funds on 1 chain)
- *   ✓ One transaction, optimal UX
- *   ✓ Cross-chain routing with calldata
- *   ✓ User stays as sender → bridge accepts
- *   Example: Base USDC → Arbitrum → Hyperliquid ✓
+ * FLOW 2 (TWO-STEP): Funds on 2+ chains
+ *   → Step 1: Consolidate to Arbitrum (swap)
+ *   → Step 2: Deposit via calldata (workaround for EIP-7702 limitation)
  *
- * FLOW 2: TWO-STEP (multi-input - funds on 2+ chains)
- *   ✓ Step 1: Consolidate to Arbitrum (swap endpoint)
- *   ✓ Step 2: Deposit from Arbitrum (calldata)
- *   ✓ Workaround for EIP-7702 limitation
- *   Example: Base + ETH USDC → Arbitrum → Hyperliquid ✓
+ * WHY: Hyperliquid bridge only credits deposits from user accounts.
+ * Cross-chain handlers become sender → bridge rejects.
+ * Calldata keeps user as sender → bridge accepts.
  *
- * WHY THIS MATTERS:
- *   • Hyperliquid bridge ONLY credits deposits from user accounts
- *   • Cross-chain handlers become sender → bridge rejects ✗
- *   • Calldata keeps user as sender → bridge accepts ✓
- *   • Multi-input hits EIP-7702 limitation → needs consolidation
- *
- * REFERENCE:
- *   • Pattern used by Dexari: $4M+ monthly volume
- *   • Docs: .context/HYPERLIQUID.md
- *   • Working tx: arbiscan.io/tx/0x9739f147...
- * ═══════════════════════════════════════════════════════════════════════════
+ * See: .context/HYPERLIQUID.md for detailed explanation
  */
 
 // Configuration
@@ -75,17 +43,8 @@ const ARBITRUM_CHAIN = 'eip155:42161';
 const ARBITRUM_USDC = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 const HYPERLIQUID_BRIDGE = '0x2Df1c51E09aECF9cacB7bc98cB1742757f163dF7';
 
-/**
- * Determines if we need two-step flow based on callType and source balances
- *
- * ATOMIC FLOW (return false):
- * - same_chain_exclude_solver: all funds on target chain, no solver needed
- * - cross_chain_with_solver: single source chain, can route directly
- *
- * TWO-STEP FLOW (return true):
- * - Multiple source chains (funds split across chains)
- * - Requires consolidation first due to EIP-7702 limitation
- */
+// Determines if two-step flow is needed based on callType and source balances
+// Returns true if funds are on multiple chains (EIP-7702 limitation)
 function needsTwoStepFlow(preparedQuote: TargetCallQuoteV3): boolean {
   // If same-chain without solver, we can do atomic
   if (preparedQuote.callType === CallType.SameChainExcludeSolver) {
@@ -97,10 +56,7 @@ function needsTwoStepFlow(preparedQuote: TargetCallQuoteV3): boolean {
   return sourceBalances.length > 1;
 }
 
-/**
- * Signs, executes, and monitors a call quote
- * Reusable for both atomic and two-step flows
- */
+// Signs, executes, and monitors a call quote
 async function executeCallQuote(
   quote: any,
   signerKey: any,
@@ -135,9 +91,7 @@ async function executeCallQuote(
   return result;
 }
 
-/**
- * OPTION 1: Atomic single-transaction deposit (for single-input scenarios)
- */
+// OPTION 1: Atomic deposit (single-input scenarios)
 async function depositAtomic(
   accounts: any[],
   evmAccount: any,
@@ -150,7 +104,6 @@ async function depositAtomic(
 ) {
   console.log('\n💡 Using ATOMIC flow (single-input detected)\n');
 
-  // Prepare transfer calldata
   console.log('📋 Preparing transfer to Hyperliquid bridge...');
   const transferAbi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
   const transferCallData = encodeFunctionData({
@@ -163,7 +116,6 @@ async function depositAtomic(
   console.log(`  - To: ${HYPERLIQUID_BRIDGE}`);
   console.log(`  - Amount: ${Number(amount) / 10 ** decimals} USDC\n`);
 
-  // Prepare call quote
   console.log('📋 Preparing call quote...');
   const prepareRequest: PrepareCallRequestV3 = {
     accounts,
@@ -217,9 +169,7 @@ async function depositAtomic(
   return { success: true, flow: 'atomic', result };
 }
 
-/**
- * OPTION 2: Two-step consolidation deposit (for multi-input scenarios)
- */
+// OPTION 2: Two-step deposit (multi-input scenarios)
 async function depositTwoStep(
   accounts: any[],
   evmAccount: any,
@@ -291,9 +241,7 @@ async function depositTwoStep(
   // Wait a moment for balance to update
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  // ========================================================================
   // STEP 2: Deposit to Hyperliquid bridge using call data
-  // ========================================================================
   console.log('\n🌉 STEP 2: Depositing to Hyperliquid bridge...');
 
   // Prepare transfer calldata
@@ -387,9 +335,7 @@ async function depositTwoStep(
   return { swapResult, depositResult, success: true, flow: 'two-step' };
 }
 
-/**
- * Smart router: detects single vs multi-input and chooses optimal flow
- */
+// Smart router: detects single vs multi-input and chooses optimal flow
 async function depositToHyperLiquid(
   amount: string,
   decimals: number,
@@ -488,9 +434,7 @@ async function depositToHyperLiquid(
   }
 }
 
-/**
- * Main - Smart Hyperliquid deposit
- */
+// Main - Smart Hyperliquid deposit
 async function main() {
   try {
     // Deposit USDC to Hyperliquid bridge
