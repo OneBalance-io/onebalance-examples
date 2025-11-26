@@ -1,4 +1,6 @@
 import { parseUnits, parseAbi, encodeFunctionData } from 'viem';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   loadAccounts,
   prepareCallQuoteV3,
@@ -15,6 +17,57 @@ import {
   ContractAccountType,
   type Hex,
 } from '../helpers';
+
+// Log capture for markdown export
+const logBuffer: string[] = [];
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+
+function captureLog(...args: any[]) {
+  const message = args
+    .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)))
+    .join(' ');
+  logBuffer.push(message);
+  originalConsoleLog.apply(console, args);
+}
+
+function captureError(...args: any[]) {
+  const message = args
+    .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)))
+    .join(' ');
+  logBuffer.push(`ERROR: ${message}`);
+  originalConsoleError.apply(console, args);
+}
+
+function saveLogsToMarkdown(baseFilename: string) {
+  const timestamp = new Date().toISOString();
+  const dateStr = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+  const filename = `${baseFilename}-${dateStr}.md`;
+
+  const markdown = `# Hyperliquid Deposit Log
+
+**Timestamp:** ${timestamp}
+
+## Console Output
+
+\`\`\`
+${logBuffer.join('\n')}
+\`\`\`
+`;
+
+  const logsDir = path.join(__dirname, 'logs');
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+
+  const outputPath = path.join(logsDir, filename);
+  fs.writeFileSync(outputPath, markdown, 'utf-8');
+  originalConsoleLog(`\n📄 Logs saved to: ${outputPath}`);
+}
+
+// Override console methods
+console.log = captureLog;
+console.error = captureError;
 
 /**
  * Deposit USDC to Hyperliquid Bridge using EIP-7702 account with call data
@@ -119,6 +172,7 @@ async function depositToHyperLiquid(
     console.log('📋 Getting call quote with cross-chain routing...');
 
     const callRequest: CallRequestV3 = {
+      //   fromAggregatedAssetId: 'ob:usdc',
       fromAssetId: `${ARBITRUM_CHAIN}/erc20:${ARBITRUM_USDC}`,
       accounts,
       tamperProofSignature: preparedQuote.tamperProofSignature,
@@ -196,16 +250,25 @@ async function main() {
     // Deposit 1 USDC to Hyperliquid bridge on Arbitrum
     // This will pull from aggregated USDC across all chains
     await depositToHyperLiquid(
-      parseUnits('0.6', 6).toString(), // 1 USDC (6 decimals)
+      parseUnits('0.2', 6).toString(), // 1 USDC (6 decimals)
       18, // USDC decimals
       50, // 0.5% slippage
     );
   } catch (error) {
     console.error('Failed:', error);
-    process.exit(1);
+  } finally {
+    // Save logs to markdown file with timestamp
+    saveLogsToMarkdown('depositToHyperLiquid-log');
+
+    // Restore original console methods
+    console.log = originalConsoleLog;
+    console.error = originalConsoleError;
   }
 }
 
 if (require.main === module) {
-  main();
+  main().catch((error) => {
+    originalConsoleError('Fatal error:', error);
+    process.exit(1);
+  });
 }
