@@ -39,6 +39,26 @@ pnpm run eip-7702:swap
 
 Example: RESOLV ↔ ob:usdc on BSC demonstrating aggregated asset routing.
 
+### 4. xStock Purchase (`xstock.ts`)
+
+Buy tokenized stocks (Apple, Alphabet, Amazon, etc) on Solana using aggregated or chain-specific USDC.
+
+```bash
+pnpm run eip-7702:xstock
+```
+
+**Note**: xStocks only available on Solana. EVM chains have insufficient liquidity.
+
+Supported tokens:
+- AAPLx (Apple)
+- GOOGLx (Alphabet)
+- AMZNx (Amazon)
+- ABTx (Abbott)
+- ABBVx (AbbVie)
+- ACNx (Accenture)
+- ...
+- 
+
 ## Setup
 
 ### 1. Create EVM Key
@@ -119,4 +139,5 @@ const quoteRequest: QuoteRequestV3 = {
 - `index.ts` - Basic EIP-7702 transfer
 - `solana-transfer-to-polygon.ts` - Solana ↔ Polygon bidirectional transfers
 - `swap.ts` - Reusable token swap function
+- `xstock.ts` - Buy tokenized stocks on Solana
 - `../helpers/` - Shared OneBalance API functions and types
