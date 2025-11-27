@@ -62,18 +62,18 @@ function getXStockAssetId(symbol: XStockSymbol): string {
 }
 
 /**
- * Buy xStock token on Solana
- * Uses EIP-7702 + Solana multiaccount for cross-chain purchases
+ * Trade xStock tokens on Solana (buy or sell)
+ * Uses EIP-7702 + Solana multiaccount for cross-chain swaps
  */
-async function buyXStock(
-  fromAssetId: string, // e.g., 'ob:usdc' or chain-specific USDC
-  toAssetId: string, // Solana xStock token (use getXStockAssetId helper)
+async function tradeXStock(
+  fromAssetId: string, // e.g., 'ob:usdc', chain-specific USDC, or xStock token
+  toAssetId: string, // e.g., xStock token or 'ob:usdc'
   amount: string, // Amount in base units (e.g., parseUnits('10', 6) for USDC)
   decimals: number, // Decimals of the from asset
   slippageTolerance: number = 100, // 1% default
 ) {
   try {
-    console.log('🚀 Buying xStock token...\n');
+    console.log('🚀 Trading xStock token...\n');
     console.log(`💱 ${fromAssetId} → ${toAssetId}`);
     console.log(`💰 Amount: ${amount}\n`);
 
@@ -137,18 +137,18 @@ async function buyXStock(
     );
 
     // Step 5: Execute
-    console.log('\n⚡ Executing purchase...');
+    console.log('\n⚡ Executing trade...');
     const result = await executeQuoteV3(signedQuote);
     console.log('Result:', JSON.stringify(result, null, 2));
-    console.log('✅ Purchase submitted:', result.success);
+    console.log('✅ Trade submitted:', result.success);
 
     // Step 6: Monitor completion
     await monitorTransactionCompletion(quote);
-    console.log('\n🎉 Successfully purchased xStock token!\n');
+    console.log('\n🎉 Successfully traded xStock token!\n');
 
     return result;
   } catch (error) {
-    console.error('\n❌ Failed to buy xStock:', (error as Error).message);
+    console.error('\n❌ Failed to trade xStock:', (error as Error).message);
     throw error;
   }
 }
@@ -166,7 +166,7 @@ function listAvailableXStocks() {
   console.log('   EVM chains have insufficient liquidity\n');
   console.log('Usage:');
   console.log('  getXStockAssetId(symbol) - get Solana CAIP-19 asset ID');
-  console.log('  buyXStock(fromAssetId, toAssetId, amount, decimals, slippage)\n');
+  console.log('  tradeXStock(fromAssetId, toAssetId, amount, decimals, slippage)\n');
 }
 
 /**
@@ -178,7 +178,7 @@ async function main() {
     listAvailableXStocks();
 
     // Example 1: Buy Apple (AAPLx) on Solana using aggregated USDC
-    // await buyXStock(
+    // await tradeXStock(
     //   'ob:usdc',
     //   getXStockAssetId('AAPLx'),
     //   parseUnits('1', 6).toString(),
@@ -187,7 +187,7 @@ async function main() {
     // );
 
     // Example 2: Buy Alphabet (GOOGLx) on Solana
-    // await buyXStock(
+    // await tradeXStock(
     //   'ob:usdc',
     //   getXStockAssetId('GOOGLx'),
     //   parseUnits('1', 6).toString(),
@@ -196,11 +196,20 @@ async function main() {
     // );
 
     // Example 3: Buy Amazon (AMZNx) using chain-specific USDC from Arbitrum
-    await buyXStock(
-      'eip155:42161/erc20:0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC on Arbitrum
-      getXStockAssetId('AMZNx'),
-      parseUnits('1', 6).toString(),
-      6,
+    // await tradeXStock(
+    //   'eip155:42161/erc20:0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC on Arbitrum
+    //   getXStockAssetId('AMZNx'),
+    //   parseUnits('1', 6).toString(),
+    //   6,
+    //   100,
+    // );
+
+    // Example 4: Sell Apple (AAPLx) back to aggregated USDC
+    await tradeXStock(
+      getXStockAssetId('AAPLx'), // Sell AAPLx
+      'ob:usdc', // Buy aggregated USDC
+      parseUnits('0.002', 8).toString(), // AAPLx has 8 decimals
+      8,
       100,
     );
   } catch (error) {
