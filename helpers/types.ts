@@ -344,11 +344,18 @@ export interface PrepareCallRequestV3 {
   slippageTolerance?: number;
 }
 
+export enum CallType {
+  SameChainExcludeSolver = 'same_chain_exclude_solver',
+  CrossChainWithSolver = 'cross_chain_with_solver',
+  SameChainWithSolver = 'same_chain_with_solver',
+  CrossChainWithSolverAndSwaps = 'cross_chain_with_solver_and_swaps',
+}
+
 export interface TargetCallQuoteV3 {
   accounts: Account[];
   chainOperation: ChainOperation;
   tamperProofSignature: string;
-  callType?: string;
+  callType?: CallType | string;
   sourceAssetBalances?: Array<{
     assetType: string;
     balance: string;
@@ -363,6 +370,7 @@ export interface CallRequestV3 {
   chainOperation: ChainOperation;
   tamperProofSignature: string;
   fromAggregatedAssetId?: string;
+  fromAssetId?: string;
   slippageTolerance?: number;
 }
 

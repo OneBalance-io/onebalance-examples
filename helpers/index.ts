@@ -55,6 +55,8 @@ export {
   loadAccounts,
   loadMultiChainAccounts,
   getBalanceCheckAddress,
+  getChainIdentifier,
+  buildAccountParam,
   type LoadAccountsResult,
   type LoadMultiChainAccountsResult,
   type EvmAccountType,
