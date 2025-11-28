@@ -1,4 +1,4 @@
-import { parseUnits, parseAbi, encodeFunctionData } from 'viem';
+import { parseUnits, formatUnits, parseAbi, encodeFunctionData } from 'viem';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -126,7 +126,7 @@ async function depositToHyperLiquid(
 
     console.log('✅ Transfer calldata encoded');
     console.log(`  - To: ${HYPERLIQUID_BRIDGE}`);
-    console.log(`  - Amount: ${Number(amount) / 10 ** decimals} USDC\n`);
+    console.log(`  - Amount: ${formatUnits(BigInt(amount), decimals)} USDC\n`);
 
     // Step 4: Prepare call quote
     console.log('📋 Preparing call quote...');

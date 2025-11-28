@@ -1,4 +1,4 @@
-import { parseUnits, parseAbi, encodeFunctionData } from 'viem';
+import { parseUnits, formatUnits, parseAbi, encodeFunctionData } from 'viem';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -167,7 +167,7 @@ async function depositAtomic(
 
   console.log('✅ Transfer calldata encoded');
   console.log(`  - To: ${HYPERLIQUID_BRIDGE}`);
-  console.log(`  - Amount: ${Number(amount) / 10 ** decimals} USDC\n`);
+  console.log(`  - Amount: ${formatUnits(BigInt(amount), decimals)} USDC\n`);
 
   console.log('📋 Preparing call quote...');
   const prepareRequest: PrepareCallRequestV3 = {
@@ -263,7 +263,7 @@ async function depositTwoStep(
   console.log(`  - From: ${swapQuote.originToken?.aggregatedAssetId || 'unknown'}`);
   console.log(`  - To: ${swapQuote.destinationToken?.assetType || 'unknown'}`);
   console.log(
-    `  - Amount out: ${Number(swapQuote.destinationToken?.amount || 0) / 10 ** decimals} USDC`,
+    `  - Amount out: ${formatUnits(BigInt(swapQuote.destinationToken?.amount || 0), decimals)} USDC`,
   );
 
   // Sign swap operations
@@ -308,7 +308,7 @@ async function depositTwoStep(
 
   console.log('✅ Transfer calldata encoded');
   console.log(`  - To: ${HYPERLIQUID_BRIDGE}`);
-  console.log(`  - Amount: ${Number(amount) / 10 ** decimals} USDC\n`);
+  console.log(`  - Amount: ${formatUnits(BigInt(amount), decimals)} USDC\n`);
 
   // Prepare call quote (same-chain operation on Arbitrum)
   console.log('\n📋 Preparing call quote...');
