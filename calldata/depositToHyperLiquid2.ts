@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
   loadAccounts,
+  loadMultiChainAccounts,
   prepareCallQuoteV3,
   fetchCallQuoteV3,
   executeQuoteV3,
@@ -160,22 +161,20 @@ async function executeCallQuote(
   );
   console.log('✅ All operations signed\n');
 
-  // console.log(`⚡ Executing ${flowType} deposit...`);
-  // const result = await executeQuoteV3(signedQuote);
+  console.log(`⚡ Executing ${flowType} deposit...`);
+  const result = await executeQuoteV3(signedQuote);
 
-  // if (!result.success) {
-  //   throw new Error(result.error || `${flowType} deposit execution failed`);
-  // }
+  if (!result.success) {
+    throw new Error(result.error || `${flowType} deposit execution failed`);
+  }
 
-  // console.log('✅ Deposit executed successfully!\n');
+  console.log('✅ Deposit executed successfully!\n');
 
-  // // Monitor completion
-  // console.log('📋 Monitoring transaction...');
-  // await monitorTransactionCompletion(quote);
+  // Monitor completion
+  console.log('📋 Monitoring transaction...');
+  await monitorTransactionCompletion(quote);
 
-  // return result;
-  console.log('✅ Deposit quote prepared (execution commented out)\n');
-  return { success: true };
+  return result;
 }
 
 // OPTION 1: Atomic deposit (single-input scenarios)
@@ -191,12 +190,17 @@ async function depositAtomic(
 ) {
   console.log('\n💡 Using ATOMIC flow (single-input detected)\n');
 
+  // Convert amount from aggregated decimals to native token decimals
+  const nativeDecimals = 6; // Arbitrum USDC has 6 decimals
+  const decimalDiff = decimals - nativeDecimals;
+  const amountInNativeDecimals = BigInt(amount) / 10n ** BigInt(decimalDiff);
+
   console.log('📋 Preparing transfer to Hyperliquid bridge...');
   const transferAbi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
   const transferCallData = encodeFunctionData({
     abi: transferAbi,
     functionName: 'transfer',
-    args: [HYPERLIQUID_BRIDGE as Hex, BigInt(amount)],
+    args: [HYPERLIQUID_BRIDGE as Hex, amountInNativeDecimals],
   });
 
   console.log('✅ Transfer calldata encoded');
@@ -217,7 +221,7 @@ async function depositAtomic(
     tokensRequired: [
       {
         assetType: `${ARBITRUM_CHAIN}/erc20:${ARBITRUM_USDC}`,
-        amount: amount,
+        amount: amountInNativeDecimals.toString(),
       },
     ],
   };
@@ -270,7 +274,7 @@ async function depositTwoStep(
   console.log('\n💡 Using TWO-STEP flow (multi-input detected)\n');
   console.log('📊 STEP 1: Consolidating funds to Arbitrum...');
 
-  // Fetch balance to calculate non-Arbitrum amount
+  // Fetch balance
   const accountParam = buildAccountParam(evmAccount, solanaAccount);
   const balanceResponse = await fetchAggregatedBalanceV3(accountParam, 'ob:usdc');
 
@@ -282,19 +286,41 @@ async function depositTwoStep(
     throw new Error('No USDC balance found');
   }
 
-  // Calculate available non-Arbitrum balance (excluding destination)
-  const availableNonArbitrum = calculateNonDestinationBalance(asset, '42161', decimals);
   const requestedAmount = BigInt(amount);
 
-  // Use min(requested, available from non-Arbitrum chains)
-  const amountToConsolidate =
-    requestedAmount < availableNonArbitrum ? requestedAmount : availableNonArbitrum;
+  // Calculate Arbitrum balance and show breakdown
+  let arbitrumBalance = 0n;
+  console.log('\n💰 Balance breakdown:');
+  for (const balance of asset.individualAssetBalances) {
+    const chainId = getChainIdentifier(balance.assetType);
+    const nativeDecimals = getNativeDecimals(chainId);
+    const balanceAmount = BigInt(balance.balance);
 
-  console.log(`💱 Consolidation plan:`);
-  console.log(`   Requested: ${formatUnits(requestedAmount, decimals)} USDC`);
+    console.log(`  - Chain ${chainId}: ${formatUnits(balanceAmount, nativeDecimals)} USDC`);
+
+    if (chainId === '42161') {
+      // Normalize to aggregated decimals
+      const decimalDiff = decimals - nativeDecimals;
+      arbitrumBalance += balanceAmount * 10n ** BigInt(decimalDiff);
+    }
+  }
+
+  const availableNonArbitrum = calculateNonDestinationBalance(asset, '42161', decimals);
+
+  console.log(`\n💱 Consolidation plan:`);
+  console.log(`   Requested for deposit: ${formatUnits(requestedAmount, decimals)} USDC`);
+  console.log(`   Already on Arbitrum: ${formatUnits(arbitrumBalance, decimals)} USDC`);
   console.log(
-    `   Available from non-Arbitrum: ${formatUnits(availableNonArbitrum, decimals)} USDC`,
+    `   Available from other chains: ${formatUnits(availableNonArbitrum, decimals)} USDC`,
   );
+
+  // Calculate how much we need to consolidate
+  const needToConsolidate =
+    requestedAmount > arbitrumBalance ? requestedAmount - arbitrumBalance : 0n;
+  const amountToConsolidate =
+    needToConsolidate < availableNonArbitrum ? needToConsolidate : availableNonArbitrum;
+
+  console.log(`   Need to consolidate: ${formatUnits(needToConsolidate, decimals)} USDC`);
   console.log(`   Will consolidate: ${formatUnits(amountToConsolidate, decimals)} USDC\n`);
 
   const swapQuoteRequest: QuoteRequestV3 = {
@@ -336,30 +362,42 @@ async function depositTwoStep(
     ContractAccountType.KernelV33,
   );
 
-  // console.log('⚡ Executing swap...');
-  // const swapResult = await executeQuoteV3(signedSwapQuote);
+  console.log('⚡ Executing swap...');
+  const swapResult = await executeQuoteV3(signedSwapQuote);
 
-  // if (!swapResult.success) {
-  //   throw new Error(swapResult.error || 'Swap execution failed');
-  // }
+  if (!swapResult.success) {
+    throw new Error(swapResult.error || 'Swap execution failed');
+  }
 
-  // console.log('✅ Swap executed successfully!');
+  console.log('✅ Swap executed successfully!');
 
-  // // Monitor swap completion
-  // console.log('📋 Monitoring swap...');
-  // await monitorTransactionCompletion(swapQuote);
-  // console.log('✅ Funds consolidated on Arbitrum!\n');
+  // Monitor swap completion
+  console.log('📋 Monitoring swap...');
+  await monitorTransactionCompletion(swapQuote);
+  console.log('✅ Funds consolidated on Arbitrum!\n');
 
-  // // Wait a moment for balance to update
-  // await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  console.log('✅ Swap quote prepared (execution commented out)\n');
+  // Wait a moment for balance to update
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   // STEP 2: Deposit to Hyperliquid bridge using call data
   console.log('\n🌉 STEP 2: Depositing to Hyperliquid bridge...');
 
-  // Use the actual amount from swap output (in native decimals - 6 for Arbitrum USDC)
-  const depositAmount = swapOutputAmount;
+  // Calculate actual available after consolidation (arbBalance + swapOutput)
+  const swapOutputBigInt = BigInt(swapOutputAmount);
+  const nativeDecimals = 6;
+  const decimalDiff = decimals - nativeDecimals;
+  const arbitrumBalanceNative = arbitrumBalance / 10n ** BigInt(decimalDiff);
+  const actualAvailable = arbitrumBalanceNative + swapOutputBigInt;
+  const requestedDepositNative = requestedAmount / 10n ** BigInt(decimalDiff);
+
+  // Use min(requested, actualAvailable) accounting for fees/slippage
+  const depositAmount = (
+    requestedDepositNative < actualAvailable ? requestedDepositNative : actualAvailable
+  ).toString();
+
+  console.log(`💰 Available for deposit: ${formatUnits(actualAvailable, 6)} USDC`);
+  console.log(`   Requested: ${formatUnits(requestedDepositNative, 6)} USDC`);
+  console.log(`   Will deposit: ${formatUnits(BigInt(depositAmount), 6)} USDC\n`);
 
   console.log('📋 Preparing transfer to Hyperliquid bridge...');
   const transferAbi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
@@ -441,16 +479,18 @@ async function depositTwoStep(
     'two-step',
   );
 
-  console.log('\n✅ Two-step quotes prepared!');
-  console.log(`\n💡 Plan:`);
-  console.log(`   1. Consolidate ${formatUnits(amountToConsolidate, decimals)} USDC to Arbitrum`);
+  console.log('\n🎉 Two-step deposit completed!');
+  console.log(`\n💡 Summary:`);
   console.log(
-    `   2. Deposit ${formatUnits(BigInt(swapOutputAmount), 6)} USDC to Hyperliquid bridge`,
+    `   1. Consolidated ${formatUnits(amountToConsolidate, decimals)} USDC from other chains → got ${formatUnits(BigInt(swapOutputAmount), 6)} USDC`,
+  );
+  console.log(
+    `   2. Deposited ${formatUnits(BigInt(depositAmount), 6)} USDC to Hyperliquid bridge`,
   );
   console.log(`   Sender: ${evmAccount?.accountAddress}`);
   console.log(`   Bridge: ${HYPERLIQUID_BRIDGE}\n`);
 
-  return { depositResult, success: true, flow: 'two-step' };
+  return { swapResult, depositResult, success: true, flow: 'two-step' };
 }
 
 // Smart router: detects single vs multi-input and chooses optimal flow
@@ -462,17 +502,18 @@ async function depositToHyperLiquid(
   try {
     console.log('🚀 Starting smart Hyperliquid deposit...\n');
 
-    // Load EIP-7702 account
-    const { accounts, evmAccount, signerKey, solanaKeypair, solanaAccount } = await loadAccounts(
-      {
-        fromAssetId: 'ob:usdc',
-        toAssetId: `${ARBITRUM_CHAIN}/erc20:${ARBITRUM_USDC}`,
-        amount,
-        decimals,
-      },
-      'session4',
-      'eip7702',
-    );
+    // Load EIP-7702 + Solana accounts (ob:usdc can include Solana USDC)
+    const { accounts, evmAccount, signerKey, solanaKeypair, solanaAccount } =
+      await loadMultiChainAccounts({
+        needsEvm: true,
+        needsSolana: false,
+        sessionKeyName: 'session4',
+        evmAccountType: 'eip7702',
+      });
+
+    if (!evmAccount || !signerKey) {
+      throw new Error('EVM account is required');
+    }
 
     // Check aggregated USDC balance
     const balanceAddress = getBalanceCheckAddress('ob:usdc', evmAccount, solanaAccount);
@@ -481,12 +522,17 @@ async function depositToHyperLiquid(
     // Prepare a test quote to detect multi-input scenario
     console.log('\n🔍 Detecting fund distribution...');
 
+    // Convert amount from aggregated decimals to native token decimals (6 for USDC)
+    const nativeDecimals = 6; // Arbitrum USDC has 6 decimals
+    const decimalDiff = decimals - nativeDecimals;
+    const amountInNativeDecimals = BigInt(amount) / 10n ** BigInt(decimalDiff);
+
     // Generate transfer calldata for test
     const transferAbi = parseAbi(['function transfer(address to, uint256 amount) returns (bool)']);
     const testTransferCallData = encodeFunctionData({
       abi: transferAbi,
       functionName: 'transfer',
-      args: [HYPERLIQUID_BRIDGE as Hex, BigInt(amount)],
+      args: [HYPERLIQUID_BRIDGE as Hex, amountInNativeDecimals],
     });
 
     const testPrepareRequest: PrepareCallRequestV3 = {
@@ -502,7 +548,7 @@ async function depositToHyperLiquid(
       tokensRequired: [
         {
           assetType: `${ARBITRUM_CHAIN}/erc20:${ARBITRUM_USDC}`,
-          amount: amount,
+          amount: amountInNativeDecimals.toString(),
         },
       ],
     };
@@ -559,19 +605,11 @@ async function main() {
     // Automatically detects single-input vs multi-input scenario
     // and chooses optimal flow (atomic vs two-step)
 
-    // Public API (6 decimals)
     await depositToHyperLiquid(
-      parseUnits('2', 6).toString(), // 2 USDC
-      6, // Balance decimals (public API)
+      parseUnits('1.5', 18).toString(), // 1.5 USDC
+      18, // Balance decimals
       50,
     );
-
-    // Team API (18 decimals)
-    // await depositToHyperLiquid(
-    //   parseUnits('2', 18).toString(), // 2 USDC
-    //   18, // Balance decimals (custom API)
-    //   50,
-    // );
   } catch (error) {
     console.error('Failed:', error);
   } finally {
