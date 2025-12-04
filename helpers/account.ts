@@ -76,6 +76,7 @@ export async function loadAccounts(
 
     evmAccount = {
       type: 'kernel-v3.1-ecdsa' as const,
+      deploymentType: 'ERC4337' as const,
       signerAddress: signerKey.address as Hex,
       accountAddress: evmAccountAddress as Hex,
     };

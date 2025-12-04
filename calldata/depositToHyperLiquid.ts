@@ -1,6 +1,4 @@
 import { parseUnits, formatUnits, parseAbi, encodeFunctionData } from 'viem';
-import * as fs from 'fs';
-import * as path from 'path';
 import {
   loadMultiChainAccounts,
   prepareCallQuoteV3,
@@ -23,57 +21,6 @@ import {
   type TargetCallQuoteV3,
   CallType,
 } from '../helpers';
-
-// Log capture for markdown export
-const logBuffer: string[] = [];
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
-function captureLog(...args: any[]) {
-  const message = args
-    .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)))
-    .join(' ');
-  logBuffer.push(message);
-  originalConsoleLog.apply(console, args);
-}
-
-function captureError(...args: any[]) {
-  const message = args
-    .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)))
-    .join(' ');
-  logBuffer.push(`ERROR: ${message}`);
-  originalConsoleError.apply(console, args);
-}
-
-function saveLogsToMarkdown(baseFilename: string) {
-  const timestamp = new Date().toISOString();
-  const dateStr = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
-  const filename = `${baseFilename}-${dateStr}.md`;
-
-  const markdown = `# Hyperliquid Smart Deposit Log
-
-**Timestamp:** ${timestamp}
-
-## Console Output
-
-\`\`\`
-${logBuffer.join('\n')}
-\`\`\`
-`;
-
-  const logsDir = path.join(__dirname, 'logs');
-  if (!fs.existsSync(logsDir)) {
-    fs.mkdirSync(logsDir, { recursive: true });
-  }
-
-  const outputPath = path.join(logsDir, filename);
-  fs.writeFileSync(outputPath, markdown, 'utf-8');
-  originalConsoleLog(`\n📄 Logs saved to: ${outputPath}`);
-}
-
-// Override console methods
-console.log = captureLog;
-console.error = captureError;
 
 /**
  * Smart Hyperliquid Deposit with EIP-7702 Account
@@ -609,19 +556,10 @@ async function main() {
     );
   } catch (error) {
     console.error('Failed:', error);
-  } finally {
-    // Save logs to markdown file with timestamp
-    saveLogsToMarkdown('depositToHyperLiquid-log');
-
-    // Restore original console methods
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
+    process.exit(1);
   }
 }
 
 if (require.main === module) {
-  main().catch((error) => {
-    originalConsoleError('Fatal error:', error);
-    process.exit(1);
-  });
+  main();
 }

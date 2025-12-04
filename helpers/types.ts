@@ -27,6 +27,7 @@ export interface RoleBasedAccount {
 
 export interface StandardAccount {
   type: 'kernel-v3.1-ecdsa';
+  deploymentType?: 'ERC4337';
   signerAddress: Hex;
   accountAddress: Hex;
 }
@@ -355,7 +356,7 @@ export interface TargetCallQuoteV3 {
   accounts: Account[];
   chainOperation: ChainOperation;
   tamperProofSignature: string;
-  callType?: CallType | string;
+  callType?: CallType;
   sourceAssetBalances?: Array<{
     assetType: string;
     balance: string;
