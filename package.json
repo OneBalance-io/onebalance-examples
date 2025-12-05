@@ -14,7 +14,7 @@
     "eip-7702:solana-transfer-to-polygon": "ts-node eip-7702/solana-transfer-to-polygon.ts",
     "eip-7702:swap": "ts-node eip-7702/swap.ts",
     "eip-7702:xstock": "ts-node eip-7702/xstock.ts",
-    "solana-swap": "ts-node solana/swap.ts",
+    "solana:swap": "ts-node solana/swap.ts",
     "swap:role-based": "ts-node swap/role-based.ts",
     "swap:standard-account": "ts-node swap/standard-account.ts",
     "swap:simple": "ts-node swap/simple-swap.ts",
