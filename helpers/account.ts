@@ -31,7 +31,7 @@ export interface LoadAccountsResult {
 
 export interface LoadMultiChainAccountsResult {
   accounts: Account[];
-  evmAccount: StandardAccount | null;
+  evmAccount: StandardAccount | EIP7702Account | null;
   solanaAccount: SolanaAccount | null;
   signerKey: EOAKeyPair | null;
   solanaKeypair: Keypair | null;
@@ -60,7 +60,7 @@ export async function loadAccounts(
 
   if (accountType === 'eip7702') {
     // EIP-7702: EOA is the account address
-    const accountAddress = signerKey.address.toLowerCase() as Hex;
+    const accountAddress = signerKey.address as Hex;
     console.log(`EIP-7702 Account: ${accountAddress}`);
 
     evmAccount = {
@@ -76,6 +76,7 @@ export async function loadAccounts(
 
     evmAccount = {
       type: 'kernel-v3.1-ecdsa' as const,
+      deploymentType: 'ERC4337' as const,
       signerAddress: signerKey.address as Hex,
       accountAddress: evmAccountAddress as Hex,
     };
@@ -125,26 +126,50 @@ export async function loadMultiChainAccounts(options: {
   needsEvm?: boolean;
   needsSolana?: boolean;
   sessionKeyName?: string;
+  evmAccountType?: EvmAccountType;
 }): Promise<LoadMultiChainAccountsResult> {
-  const { needsEvm = true, needsSolana = false, sessionKeyName = 'session' } = options;
+  const {
+    needsEvm = true,
+    needsSolana = false,
+    sessionKeyName = 'session',
+    evmAccountType = 'standard',
+  } = options;
 
   console.log('🔑 Loading multi-chain accounts...');
 
-  let evmAccount: StandardAccount | null = null;
+  let evmAccount: StandardAccount | EIP7702Account | null = null;
   let signerKey = null;
 
   if (needsEvm) {
     signerKey = readOrCacheEOAKey(sessionKeyName);
-    const evmAccountAddress = await predictStandardAddress('kernel-v3.1-ecdsa', signerKey.address);
 
-    console.log(`EVM Signer: ${signerKey.address}`);
-    console.log(`EVM Account: ${evmAccountAddress}`);
+    if (evmAccountType === 'eip7702') {
+      // EIP-7702: EOA is the account address
+      const accountAddress = signerKey.address as Hex;
+      console.log(`EVM Signer: ${signerKey.address}`);
+      console.log(`EIP-7702 Account: ${accountAddress}`);
 
-    evmAccount = {
-      type: 'kernel-v3.1-ecdsa' as const,
-      signerAddress: signerKey.address as `0x${string}`,
-      accountAddress: evmAccountAddress as `0x${string}`,
-    };
+      evmAccount = {
+        type: 'kernel-v3.3-ecdsa' as const,
+        deploymentType: 'EIP7702' as const,
+        accountAddress,
+        signerAddress: accountAddress,
+      };
+    } else {
+      // Standard account: predict smart account address
+      const evmAccountAddress = await predictStandardAddress(
+        'kernel-v3.1-ecdsa',
+        signerKey.address,
+      );
+      console.log(`EVM Signer: ${signerKey.address}`);
+      console.log(`Standard Account: ${evmAccountAddress}`);
+
+      evmAccount = {
+        type: 'kernel-v3.1-ecdsa' as const,
+        signerAddress: signerKey.address as `0x${string}`,
+        accountAddress: evmAccountAddress as `0x${string}`,
+      };
+    }
   }
 
   let solanaAccount: SolanaAccount | null = null;
@@ -165,7 +190,9 @@ export async function loadMultiChainAccounts(options: {
   if (solanaAccount) accounts.push(solanaAccount);
 
   const accountTypes = [];
-  if (needsEvm) accountTypes.push('EVM');
+  if (needsEvm) {
+    accountTypes.push(evmAccountType === 'eip7702' ? 'EIP-7702' : 'Standard');
+  }
   if (needsSolana) accountTypes.push('Solana');
 
   console.log(`✅ Loaded ${accounts.length} account(s): ${accountTypes.join(' + ')}`);
@@ -199,4 +226,48 @@ export function getBalanceCheckAddress(
   }
 
   return evmAccount.accountAddress;
+}
+
+/**
+ * Extract chain identifier from assetType (supports both EVM and Solana)
+ *
+ * @param assetType - The asset type in CAIP format
+ * @returns Chain identifier (chainId for EVM, 'solana' for Solana)
+ */
+export function getChainIdentifier(assetType: string): string {
+  const evmMatch = assetType.match(/eip155:(\d+)/);
+  if (evmMatch) return evmMatch[1];
+
+  if (assetType.startsWith('solana:')) return 'solana';
+
+  return 'unknown';
+}
+
+/**
+ * Build CAIP-10 account parameter for V3 aggregated balance endpoint
+ *
+ * @param evmAccount - The EVM account (optional)
+ * @param solanaAccount - The Solana account (optional)
+ * @returns Comma-separated CAIP-10 account identifiers
+ */
+export function buildAccountParam(
+  evmAccount: StandardAccount | EIP7702Account | null,
+  solanaAccount: SolanaAccount | null,
+): string {
+  const accountIds: string[] = [];
+
+  if (evmAccount) {
+    accountIds.push(`eip155:1:${evmAccount.accountAddress}`);
+  }
+
+  if (solanaAccount) {
+    // Solana CAIP-10 format: solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:address
+    accountIds.push(`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:${solanaAccount.accountAddress}`);
+  }
+
+  if (accountIds.length === 0) {
+    throw new Error('At least one account is required');
+  }
+
+  return accountIds.join(',');
 }

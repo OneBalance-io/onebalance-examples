@@ -1,148 +1,252 @@
-import { PublicKey } from '@solana/web3.js';
 import { formatUnits, parseUnits } from 'viem';
-import bs58 from 'bs58';
 import {
-  loadSolanaKey,
+  loadMultiChainAccounts,
   monitorTransactionCompletion,
   fetchAggregatedBalanceV3,
   getQuoteV3,
   executeQuoteV3,
-  signSolanaOperation,
+  signAllOperations,
+  buildAccountParam,
+  checkAssetBalance,
+  getBalanceCheckAddress,
   displaySwapQuote,
   QuoteRequestV3,
-  SolanaOperation,
+  ContractAccountType,
 } from '../helpers';
 
-// Solana asset IDs
-const SOL_ASSET_ID = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/slip44:501';
-const USDC_SOLANA_ASSET_ID =
-  'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+interface SwapSolanaAssetsParams {
+  /** Source asset ID (e.g., 'ob:sol', 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/slip44:501') */
+  fromAssetId: string;
+  /** Destination asset ID (e.g., 'ob:usdc', 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v') */
+  toAssetId: string;
+  /** Amount to swap in smallest unit (wei-equivalent) */
+  amount: string;
+  /** Decimals of the source asset */
+  fromDecimals: number;
+  /** Slippage tolerance in basis points (default: 50 = 0.5%) */
+  slippageTolerance?: number;
+}
 
 /**
- * Check SOL balance using the v3 aggregated balance endpoint that supports Solana
+ * Get standard decimals for aggregated assets
+ * Note: API returns aggregated balances in native token decimals
  */
-async function checkSOLBalance(accountAddress: string) {
+function getAggregatedAssetDecimals(assetId: string): number {
+  const decimalsMap: Record<string, number> = {
+    'ob:usdc': 6, // USDC uses 6 decimals
+    'ob:usdt': 6, // USDT uses 6 decimals
+    'ob:sol': 9, // SOL uses 9 decimals
+    'ob:eth': 18, // ETH uses 18 decimals
+    'ob:weth': 18, // WETH uses 18 decimals
+  };
+  return decimalsMap[assetId] || 18;
+}
+
+/**
+ * Get native decimals for a chain-specific asset
+ */
+function getNativeAssetDecimals(assetType: string): number {
+  // Solana assets
+  if (assetType.includes('slip44:501')) return 9; // SOL
+  if (assetType.startsWith('solana:') && assetType.includes('token:')) return 6; // Most Solana tokens
+
+  // BSC USDC/USDT has 18 decimals
+  if (assetType.includes('eip155:56')) return 18;
+
+  // Most EVM tokens have 6 decimals (USDC, USDT)
+  if (assetType.includes('erc20:') || assetType.includes('token:')) return 6;
+
+  // Native ETH and similar have 18 decimals
+  return 18;
+}
+
+/**
+ * Display balances for multiple aggregated assets across EVM and Solana
+ */
+async function displayMultiChainBalances(evmAccount: any, solanaAccount: any) {
   try {
-    console.log('🔍 Checking account balance...');
+    console.log('\n💰 Fetching balances for EVM and Solana accounts...\n');
 
-    const response = await fetchAggregatedBalanceV3(`solana:${accountAddress}`, 'ob:sol');
+    const accountParam = buildAccountParam(evmAccount, solanaAccount);
+    const assetsToCheck = ['ob:usdc', 'ob:usdt', 'ob:sol'];
 
-    const solBalance = response.balanceByAggregatedAsset?.find(
-      (asset) => asset.aggregatedAssetId === 'ob:sol',
-    );
+    // Fetch balances for all assets
+    const balanceResponse = await fetchAggregatedBalanceV3(accountParam, assetsToCheck.join(','));
 
-    if (!solBalance) {
-      throw new Error('No SOL balance found');
+    console.log('📊 Account Balances:\n');
+    console.log(`EVM Account: ${evmAccount.accountAddress}`);
+    console.log(`Solana Account: ${solanaAccount.accountAddress}\n`);
+
+    if (
+      !balanceResponse.balanceByAggregatedAsset ||
+      balanceResponse.balanceByAggregatedAsset.length === 0
+    ) {
+      console.log('No balances found for specified assets\n');
+      return;
     }
 
-    const balanceInSOL = parseFloat(formatUnits(BigInt(solBalance.balance), 9));
-    console.log(`💰 Available SOL balance: ${balanceInSOL.toFixed(4)} SOL`);
+    // Display each asset balance
+    for (const asset of balanceResponse.balanceByAggregatedAsset) {
+      const assetId = asset.aggregatedAssetId;
+      const totalBalance = BigInt(asset.balance);
+      const decimals = getAggregatedAssetDecimals(assetId);
+      const formattedBalance = formatUnits(totalBalance, decimals);
 
-    return balanceInSOL;
+      console.log(`${assetId.toUpperCase()}:`);
+      console.log(`  Total: ${formattedBalance}`);
+
+      // Show breakdown by chain
+      if (asset.individualAssetBalances && asset.individualAssetBalances.length > 0) {
+        console.log('  Breakdown:');
+        for (const chainBalance of asset.individualAssetBalances) {
+          const chainAmount = BigInt(chainBalance.balance);
+          const chainDecimals = getNativeAssetDecimals(chainBalance.assetType);
+          const chainFormatted = formatUnits(chainAmount, chainDecimals);
+
+          // Skip zero balances in breakdown
+          if (parseFloat(chainFormatted) === 0) continue;
+
+          // Extract chain info from assetType
+          let chainName = 'Unknown';
+          if (chainBalance.assetType.startsWith('solana:')) {
+            chainName = 'Solana';
+          } else if (chainBalance.assetType.includes('eip155:')) {
+            const chainIdMatch = chainBalance.assetType.match(/eip155:(\d+)/);
+            if (chainIdMatch) {
+              const chainId = chainIdMatch[1];
+              const chainNames: Record<string, string> = {
+                '1': 'Ethereum',
+                '10': 'Optimism',
+                '56': 'BSC',
+                '137': 'Polygon',
+                '8453': 'Base',
+                '42161': 'Arbitrum',
+                '43114': 'Avalanche',
+              };
+              chainName = chainNames[chainId] || `Chain ${chainId}`;
+            }
+          }
+
+          console.log(`    - ${chainName}: ${chainFormatted}`);
+        }
+      }
+      console.log('');
+    }
   } catch (error) {
-    console.error('Failed to check balance:', error);
-    throw error;
+    console.error('Failed to fetch balances:', (error as Error).message);
   }
 }
 
 /**
- * Perform SOL to USDC swap within Solana
+ * Perform Solana swap from any asset to any asset
+ * Supports both EVM and Solana accounts for cross-chain operations
  */
-async function swapSOLtoUSDC() {
+async function swapSolanaAssets({
+  fromAssetId,
+  toAssetId,
+  amount,
+  fromDecimals,
+  slippageTolerance = 50,
+}: SwapSolanaAssetsParams) {
   try {
-    console.log('🚀 Starting SOL to USDC swap within Solana...\n');
+    console.log('🚀 Starting Solana swap...\n');
 
-    // Load Solana keypair
-    const { keypair, publicKey } = loadSolanaKey();
-    console.log(`Using Solana account: ${publicKey}`);
+    // Load multi-chain accounts (EVM + Solana)
+    const { accounts, evmAccount, signerKey, solanaAccount, solanaKeypair } =
+      await loadMultiChainAccounts({
+        needsEvm: true,
+        needsSolana: true,
+        sessionKeyName: 'session2',
+        evmAccountType: 'eip7702',
+      });
 
-    // Validate address format
-    try {
-      new PublicKey(publicKey);
-    } catch (error) {
-      throw new Error('Invalid Solana address format');
+    if (!evmAccount || !signerKey) {
+      throw new Error('EVM account and signer key are required');
     }
 
-    // Check balance
-    const balance = await checkSOLBalance(publicKey);
-    const swapAmount = 0.0015; // 0.0015 SOL
-
-    if (balance < swapAmount) {
-      throw new Error(
-        `Insufficient balance. Need ${swapAmount} SOL, have ${balance.toFixed(4)} SOL`,
-      );
+    if (!solanaAccount || !solanaKeypair) {
+      throw new Error('Solana account is required');
     }
 
-    console.log(`\n💱 Swapping ${swapAmount} SOL to USDC...`);
+    console.log(`Using EVM account: ${evmAccount.accountAddress}`);
+    console.log(`Using Solana account: ${solanaAccount.accountAddress}`);
 
-    // Step 1: Get quote for SOL → USDC within Solana
-    console.log('📋 Getting quote...');
+    // Display balances for both EVM and Solana accounts
+    await displayMultiChainBalances(evmAccount, solanaAccount);
 
-    const quoteRequest = {
+    // Check balance for source asset
+    const balanceAddress = getBalanceCheckAddress(fromAssetId, evmAccount, solanaAccount);
+    await checkAssetBalance(balanceAddress, fromAssetId, fromDecimals);
+
+    console.log(
+      `\n💱 Swapping ${formatUnits(BigInt(amount), fromDecimals)} ${fromAssetId} to ${toAssetId}...`,
+    );
+
+    // Step 1: Get quote
+    console.log('\n📋 Getting quote...');
+
+    const quoteRequest: QuoteRequestV3 = {
       from: {
-        accounts: [
-          {
-            type: 'solana',
-            accountAddress: publicKey,
-          },
-        ],
+        accounts,
         asset: {
-          assetId: SOL_ASSET_ID,
+          assetId: fromAssetId,
         },
-        amount: parseUnits(swapAmount.toString(), 9).toString(), // SOL has 9 decimals
+        amount,
       },
       to: {
         asset: {
-          assetId: USDC_SOLANA_ASSET_ID,
+          assetId: toAssetId,
         },
       },
+      slippageTolerance,
     };
 
-    const quote = await getQuoteV3(quoteRequest as QuoteRequestV3);
+    console.log('Quote request:', JSON.stringify(quoteRequest, null, 2));
+
+    const quote = await getQuoteV3(quoteRequest);
+
+    console.log('\n✅ Quote response:', JSON.stringify(quote, null, 2));
 
     displaySwapQuote({
       quote,
-      fromAssetId: SOL_ASSET_ID,
-      toAssetId: USDC_SOLANA_ASSET_ID,
-      fromAmount: parseUnits(swapAmount.toString(), 9).toString(),
-      fromDecimals: 9,
+      fromAssetId,
+      toAssetId,
+      fromAmount: amount,
+      fromDecimals,
     });
 
-    // Step 2: Sign the Solana operation
-    console.log('\n🔐 Signing Solana transaction...');
+    // Step 2: Sign all operations (both EVM and Solana if needed)
+    console.log('\n🔐 Signing operations...');
 
-    const solanaOperation: SolanaOperation = quote.originChainsOperations.find(
-      (op: any) => op.type === 'solana',
-    ) as SolanaOperation;
-    if (!solanaOperation) {
-      throw new Error('No Solana operation found in quote');
-    }
+    const signedQuote = await signAllOperations(
+      quote,
+      signerKey,
+      solanaKeypair,
+      solanaAccount,
+      ContractAccountType.KernelV33,
+    );
 
-    // Convert keypair to private key string for signing
-    const privateKeyString = bs58.encode(keypair.secretKey);
-    const signedOperation = signSolanaOperation(publicKey, privateKeyString, solanaOperation);
-    console.log('✅ Transaction signed successfully');
-
-    const signedQuote = {
-      ...quote,
-      originChainsOperations: quote.originChainsOperations.map((op: any) =>
-        op.type === 'solana' ? signedOperation : op,
-      ),
-    };
+    console.log('✅ Operations signed successfully');
 
     // Step 3: Execute the swap
     console.log('\n⚡ Executing swap...');
 
     const result = await executeQuoteV3(signedQuote);
 
-    console.log('🎯 Swap submitted successfully!');
-    console.log('Execution success:', result.success);
+    if (!result.success) {
+      throw new Error(result.error || 'Swap execution failed');
+    }
+
+    console.log('✅ Swap submitted successfully!');
 
     // Step 4: Monitor completion
+    console.log('\n📋 Monitoring transaction...');
     await monitorTransactionCompletion(quote);
 
     console.log('\n🎉 Swap completed successfully!');
-    console.log(`✨ You have USDC in your Solana account`);
+    console.log(
+      `✨ Swapped ${formatUnits(BigInt(amount), fromDecimals)} ${fromAssetId} to ${toAssetId}`,
+    );
 
     return result;
   } catch (error) {
@@ -152,19 +256,27 @@ async function swapSOLtoUSDC() {
 }
 
 /**
- * Main function to run the swap
+ * Main function to run example swaps
  */
 async function main() {
   try {
-    await swapSOLtoUSDC();
+    // Example: SOL to USDC swap
+    const SOL_ASSET_ID = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/slip44:501';
+    const USDC_SOLANA_ASSET_ID =
+      'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+    await swapSolanaAssets({
+      fromAssetId: SOL_ASSET_ID,
+      toAssetId: USDC_SOLANA_ASSET_ID,
+      amount: parseUnits('0.002', 9).toString(),
+      fromDecimals: 9,
+      slippageTolerance: 50,
+    });
   } catch (error) {
     console.error('Operation failed:', error);
     process.exit(1);
   }
 }
-
-// Export functions for use in other files
-export { checkSOLBalance, swapSOLtoUSDC };
 
 // Run the swap if this file is executed directly
 if (require.main === module) {
