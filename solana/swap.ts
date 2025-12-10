@@ -7,8 +7,7 @@ import {
   executeQuoteV3,
   signAllOperations,
   buildAccountParam,
-  checkAssetBalance,
-  getBalanceCheckAddress,
+  checkCrossChainBalance,
   displaySwapQuote,
   QuoteRequestV3,
   ContractAccountType,
@@ -25,6 +24,8 @@ interface SwapSolanaAssetsParams {
   fromDecimals: number;
   /** Slippage tolerance in basis points (default: 50 = 0.5%) */
   slippageTolerance?: number;
+  /** Recipient account for cross-chain swaps */
+  recipientAccount?: string;
 }
 
 /**
@@ -40,6 +41,18 @@ function getAggregatedAssetDecimals(assetId: string): number {
     'ob:weth': 18, // WETH uses 18 decimals
   };
   return decimalsMap[assetId] || 18;
+}
+
+/**
+ * Get decimals for any asset (aggregated or chain-specific)
+ */
+function getAssetDecimals(assetId: string): number {
+  // Check if it's an aggregated asset
+  if (assetId.startsWith('ob:')) {
+    return getAggregatedAssetDecimals(assetId);
+  }
+  // For chain-specific assets, use native decimals
+  return getNativeAssetDecimals(assetId);
 }
 
 /**
@@ -147,6 +160,7 @@ async function swapSolanaAssets({
   amount,
   fromDecimals,
   slippageTolerance = 50,
+  recipientAccount,
 }: SwapSolanaAssetsParams) {
   try {
     console.log('🚀 Starting Solana swap...\n');
@@ -174,9 +188,13 @@ async function swapSolanaAssets({
     // Display balances for both EVM and Solana accounts
     await displayMultiChainBalances(evmAccount, solanaAccount);
 
-    // Check balance for source asset
-    const balanceAddress = getBalanceCheckAddress(fromAssetId, evmAccount, solanaAccount);
-    await checkAssetBalance(balanceAddress, fromAssetId, fromDecimals);
+    // Check balance for source asset across both EVM and Solana
+    await checkCrossChainBalance(
+      evmAccount.accountAddress,
+      solanaAccount.accountAddress,
+      fromAssetId,
+      fromDecimals,
+    );
 
     console.log(
       `\n💱 Swapping ${formatUnits(BigInt(amount), fromDecimals)} ${fromAssetId} to ${toAssetId}...`,
@@ -197,6 +215,7 @@ async function swapSolanaAssets({
         asset: {
           assetId: toAssetId,
         },
+        ...(recipientAccount && { account: recipientAccount }),
       },
       slippageTolerance,
     };
@@ -213,6 +232,7 @@ async function swapSolanaAssets({
       toAssetId,
       fromAmount: amount,
       fromDecimals,
+      toDecimals: getAssetDecimals(toAssetId),
     });
 
     // Step 2: Sign all operations (both EVM and Solana if needed)
@@ -260,16 +280,31 @@ async function swapSolanaAssets({
  */
 async function main() {
   try {
-    // Example: SOL to USDC swap
+    // Wallet address
+    const EVM_WALLET_ADDRESS = 'eip155:42161:0x7431D5885538a4E285032bA4189120b5d140d17A';
+    const SOLANA_WALLET_ADDRESS =
+      'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:DxEZpAs3xeUnVqPnVeZeshoADDjxGhX7SdUTZJBncEDN';
+
+    // Assets
     const SOL_ASSET_ID = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/slip44:501';
     const USDC_SOLANA_ASSET_ID =
       'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    const JUP_SOLANA_ASSET_ID =
+      'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN';
+    const USDC_ARBITRUM_ASSET_ID = 'eip155:42161/erc20:0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+    const USDC_BASE_ASSET_ID = 'eip155:8453/erc20:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
+    const MNGO_SOLANA_ASSET_ID =
+      'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac';
+    const PUMP_SOLANA_ASSET_ID =
+      'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn';
+    const AVA_AI_SOLANA_ASSET_ID =
+      'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:DKu9kykSfbN5LBfFXtNNDPaX35o4Fv6vJ9FKk7pZpump';
 
     await swapSolanaAssets({
-      fromAssetId: SOL_ASSET_ID,
-      toAssetId: USDC_SOLANA_ASSET_ID,
-      amount: parseUnits('0.002', 9).toString(),
-      fromDecimals: 9,
+      fromAssetId: 'ob:usdc',
+      toAssetId: SOL_ASSET_ID,
+      amount: parseUnits('4', 6).toString(),
+      fromDecimals: 6,
       slippageTolerance: 50,
     });
   } catch (error) {
