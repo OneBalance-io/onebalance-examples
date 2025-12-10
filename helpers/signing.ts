@@ -180,6 +180,10 @@ export async function signAllOperations(
 ): Promise<QuoteResponseV3> {
   console.log('🔐 Signing operations...');
 
+  if (!quote.originChainsOperations || quote.originChainsOperations.length === 0) {
+    throw new Error('No origin operations to sign');
+  }
+
   for (let i = 0; i < quote.originChainsOperations.length; i++) {
     const operation = quote.originChainsOperations[i];
 

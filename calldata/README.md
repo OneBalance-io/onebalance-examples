@@ -56,6 +56,27 @@ const OPERATION: 'deposit' | 'withdraw' = 'deposit'; // Change to 'withdraw' for
 pnpm run calldata:euler-vault-v3
 ```
 
+### `depositToHyperLiquid.ts` (V3)
+
+Smart Hyperliquid bridge deposit with automatic flow detection and destination balance handling.
+
+**Features:**
+- Automatic routing: atomic (single-chain) or two-step (multi-chain)
+- Destination balance exclusion (only consolidates what's needed)
+- Accounts for fees/slippage between steps
+- Supports EVM + Solana multi-chain
+- Handles 6 and 18 decimal configurations
+
+**Details:**
+- Detects fund distribution automatically
+- Single-input: direct deposit via calldata (one tx)
+- Multi-input: consolidate first, then deposit (two txs)
+- Uses `same_chain_exclude_solver` for optimal routing
+
+```bash
+pnpm run calldata:depositToHyperLiquid
+```
+
 ## Key Differences: V1 vs V3
 
 | Feature | V1 | V3 |
