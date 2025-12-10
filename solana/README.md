@@ -19,7 +19,7 @@ flexible Solana swap from any asset to any asset with multi-chain support
 ### How to run
 
 ```bash
-pnpm run solana-swap
+pnpm run solana:swap
 ```
 
 ### Requirements

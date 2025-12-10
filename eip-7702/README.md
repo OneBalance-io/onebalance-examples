@@ -18,7 +18,7 @@ EIP-7702 enables EOAs to gain smart account capabilities through delegation. You
 Simple USDC transfer between EVM chains using EIP-7702.
 
 ```bash
-npx tsx eip-7702/index.ts
+pnpm run eip-7702
 ```
 
 ### 2. Solana ↔ Polygon Transfer (`solana-transfer-to-polygon.ts`)
@@ -26,10 +26,18 @@ npx tsx eip-7702/index.ts
 Bidirectional USDC transfers between Solana and Polygon using EIP-7702 + Solana accounts.
 
 ```bash
-npx tsx eip-7702/solana-transfer-to-polygon.ts
+pnpm run eip-7702:solana-transfer-to-polygon
 ```
 
-### 3. Token Swap (`swap.ts`)
+### 3. USD Consolidation (`consolidate-usd.ts`)
+
+Consolidate all USD stablecoins (USDC, USDT) across chains into a single asset.
+
+```bash
+pnpm run eip-7702:consolidate-usd
+```
+
+### 4. Token Swap (`swap.ts`)
 
 Simple reusable swap function for EIP-7702 token swaps. Pass any token pair + amount.
 
@@ -39,7 +47,7 @@ pnpm run eip-7702:swap
 
 Example: RESOLV ↔ ob:usdc on BSC demonstrating aggregated asset routing.
 
-### 4. xStock Purchase (`xstock.ts`)
+### 5. xStock Purchase (`xstock.ts`)
 
 Buy tokenized stocks (Apple, Alphabet, Amazon, etc) on Solana using aggregated or chain-specific USDC.
 

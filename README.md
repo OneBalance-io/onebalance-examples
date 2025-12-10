@@ -19,12 +19,14 @@ pnpm run transfer:simple-role-based   # Transfer with role-based account
 
 # Calldata examples
 pnpm run calldata:standard-account    # V3 calldata (recommended)
+pnpm run calldata:depositToHyperLiquid # V3 Hyperliquid bridge deposit
 pnpm run calldata:euler-vault-v3      # V3 Euler vault deposit/withdraw
 pnpm run calldata:euler-vault-v1      # V1 Euler vault deposit/withdraw
+pnpm run calldata:erc20transfer       # V1 ERC20 transfer
 
 # Other examples
 pnpm run eip-7702                     # EIP-7702 delegation
-pnpm run solana-swap                  # Solana-specific swap
+pnpm run solana:swap                  # Solana-specific swap
 ```
 
 ## Examples
