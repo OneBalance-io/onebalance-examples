@@ -301,11 +301,12 @@ async function main() {
       'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:DKu9kykSfbN5LBfFXtNNDPaX35o4Fv6vJ9FKk7pZpump';
 
     await swapSolanaAssets({
-      fromAssetId: 'ob:usdc',
-      toAssetId: SOL_ASSET_ID,
-      amount: parseUnits('4', 6).toString(),
+      fromAssetId: PUMP_SOLANA_ASSET_ID,
+      toAssetId: 'ob:usdt',
+      amount: parseUnits('120', 6).toString(),
       fromDecimals: 6,
       slippageTolerance: 50,
+      // recipientAccount: EVM_WALLET_ADDRESS,
     });
   } catch (error) {
     console.error('Operation failed:', error);

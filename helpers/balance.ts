@@ -126,59 +126,115 @@ export async function checkAssetBalance(
 }
 
 /**
- * Checks aggregated asset balance across both EVM and Solana accounts
+ * Checks asset balance across both EVM and Solana accounts
+ * Supports both aggregated assets (ob:usdc) and specific assets (chain:address/token:address)
  *
  * @param evmAccountAddress - The EVM account address
  * @param solanaAccountAddress - The Solana account address
- * @param aggregatedAssetId - The aggregated asset ID (e.g., 'ob:usdc')
+ * @param assetId - The asset ID to check (aggregated or specific)
  * @param decimals - Number of decimals for the asset (default: 18)
  * @returns The total balance across both chains
  */
 export async function checkCrossChainBalance(
   evmAccountAddress: string,
   solanaAccountAddress: string,
-  aggregatedAssetId: string,
+  assetId: string,
   decimals: number = 18,
 ): Promise<number> {
   try {
-    console.log(`🔍 Checking cross-chain balance for ${aggregatedAssetId}...`);
+    console.log(`🔍 Checking cross-chain balance for ${assetId}...`);
 
     // Format account identifier for multi-chain query
     const accountIdentifier = `eip155:42161:${evmAccountAddress},solana:${solanaAccountAddress}`;
 
-    const response = await fetchAggregatedBalanceV3(accountIdentifier, aggregatedAssetId);
+    // Determine if this is an aggregated asset or specific asset
+    const isAggregatedAsset = assetId.startsWith('ob:');
 
-    const aggregatedBalance = response.balanceByAggregatedAsset?.find(
-      (asset) => asset.aggregatedAssetId === aggregatedAssetId,
-    );
-
-    if (!aggregatedBalance) {
-      console.log(`❌ No balance found for ${aggregatedAssetId}`);
-      return 0;
+    // Call API with correct parameter based on asset type
+    let response;
+    if (isAggregatedAsset) {
+      response = await fetchAggregatedBalanceV3(accountIdentifier, assetId);
+    } else {
+      response = await fetchAggregatedBalanceV3(accountIdentifier, undefined, assetId);
     }
 
-    const formattedBalance = parseFloat(formatUnits(BigInt(aggregatedBalance.balance), decimals));
-    const symbol = aggregatedAssetId.replace('ob:', '').toUpperCase();
+    let balance: string | undefined;
+    let symbol: string = assetId;
 
-    console.log(`💰 Total ${symbol} balance: ${formattedBalance.toFixed(6)}`);
-    console.log(`   EVM chains: ${response.accounts?.evm || evmAccountAddress}`);
-    console.log(`   Solana: ${response.accounts?.solana || solanaAccountAddress}`);
+    if (isAggregatedAsset) {
+      // Handle aggregated asset response
+      const aggregatedBalance = response.balanceByAggregatedAsset?.find(
+        (asset) => asset.aggregatedAssetId === assetId,
+      );
 
-    // Show breakdown by chain
-    if (aggregatedBalance.individualAssetBalances?.length > 0) {
-      console.log(`\n   Distribution:`);
-      aggregatedBalance.individualAssetBalances.forEach((balance) => {
-        if (parseFloat(balance.balance) > 0) {
-          const chainBalance = parseFloat(formatUnits(BigInt(balance.balance), decimals));
-          const chainName = balance.assetType.includes('solana')
-            ? 'Solana'
-            : balance.assetType.split('/')[0].replace('eip155:', 'Chain ');
-          console.log(`     ${chainName}: ${chainBalance.toFixed(6)} ${symbol}`);
-        }
-      });
+      if (!aggregatedBalance) {
+        console.log(`❌ No balance found for ${assetId}`);
+        return 0;
+      }
+
+      balance = aggregatedBalance.balance;
+      symbol = assetId.replace('ob:', '').toUpperCase();
+
+      const formattedBalance = parseFloat(formatUnits(BigInt(balance), decimals));
+
+      console.log(`💰 Total ${symbol} balance: ${formattedBalance.toFixed(6)}`);
+      console.log(`   EVM chains: ${response.accounts?.evm || evmAccountAddress}`);
+      console.log(`   Solana: ${response.accounts?.solana || solanaAccountAddress}`);
+
+      // Show breakdown by chain
+      if (aggregatedBalance.individualAssetBalances?.length > 0) {
+        console.log(`\n   Distribution:`);
+        aggregatedBalance.individualAssetBalances.forEach((chainBalance) => {
+          if (parseFloat(chainBalance.balance) > 0) {
+            const amount = parseFloat(formatUnits(BigInt(chainBalance.balance), decimals));
+            const chainName = chainBalance.assetType.includes('solana')
+              ? 'Solana'
+              : chainBalance.assetType.split('/')[0].replace('eip155:', 'Chain ');
+            console.log(`     ${chainName}: ${amount.toFixed(6)} ${symbol}`);
+          }
+        });
+      }
+
+      return formattedBalance;
+    } else {
+      // Handle specific asset response
+      const specificBalance = response.balanceBySpecificAsset?.find(
+        (asset) => asset.assetType === assetId,
+      );
+
+      if (!specificBalance) {
+        console.log(`❌ No balance found for ${assetId}`);
+        return 0;
+      }
+
+      balance = specificBalance.balance;
+
+      // Format symbol based on asset type
+      if (isSolanaAsset(assetId)) {
+        symbol = formatSolanaAssetSymbol(assetId);
+      } else if (assetId.includes('/erc20:')) {
+        const tokenAddress = assetId.split('/erc20:')[1];
+        symbol = `ERC20-${tokenAddress.slice(0, 6)}...`;
+      } else if (assetId.includes('/token:')) {
+        const tokenAddress = assetId.split('/token:')[1];
+        symbol = `TOKEN-${tokenAddress.slice(0, 6)}...`;
+      } else if (assetId.includes('/slip44:')) {
+        const slip44Code = assetId.split('/slip44:')[1];
+        const slip44Map: Record<string, string> = {
+          '60': 'ETH',
+          '501': 'SOL',
+          '0': 'BTC',
+        };
+        symbol = slip44Map[slip44Code] || `SLIP44-${slip44Code}`;
+      }
+
+      const formattedBalance = parseFloat(formatUnits(BigInt(balance), decimals));
+
+      console.log(`💰 Available ${symbol} balance: ${formattedBalance.toFixed(6)}`);
+      console.log(`   Asset: ${assetId}`);
+
+      return formattedBalance;
     }
-
-    return formattedBalance;
   } catch (error) {
     console.error(`Failed to check cross-chain balance:`, error);
     throw error;
