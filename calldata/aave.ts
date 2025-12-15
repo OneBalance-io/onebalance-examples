@@ -1,6 +1,6 @@
 import { parseUnits, formatUnits, encodeFunctionData } from 'viem';
 import { AaveClient, chainId, evmAddress } from '@aave/client';
-import { userSupplies, userBorrows, chains, userTransactionHistory } from '@aave/client/actions';
+import { userSupplies, userBorrows, userTransactionHistory } from '@aave/client/actions';
 import { AaveV3Arbitrum } from '@bgd-labs/aave-address-book';
 import * as readline from 'readline';
 import {
