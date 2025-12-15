@@ -9,7 +9,6 @@
     "calldata:euler-vault-v1": "ts-node calldata/euler-vault-v1.ts",
     "calldata:euler-vault-v3": "ts-node calldata/euler-vault-v3.ts",
     "calldata:depositToHyperLiquid": "ts-node calldata/depositToHyperLiquid.ts",
-    "calldata:supplyAAVE": "ts-node calldata/supplyAAVE.ts",
     "calldata:aave": "ts-node calldata/aave.ts",
     "scripts:aave": "ts-node scripts/aave.ts",
     "eip-7702": "ts-node eip-7702/index.ts",
