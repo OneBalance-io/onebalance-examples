@@ -77,21 +77,6 @@ Smart Hyperliquid bridge deposit with automatic flow detection and destination b
 pnpm run calldata:depositToHyperLiquid
 ```
 
-### `supplyAAVE.ts` (V3)
-
-Supply USDC to AAVE V3 on Arbitrum with cross-chain consolidation support.
-
-**Features:**
-- Supply from any chain to AAVE
-- Automatic cross-chain consolidation
-- AAVE SDK integration for position queries
-- Multi-chain detection via `fromAssetId`
-- Automatic approval handling
-
-```bash
-pnpm run calldata:supplyAAVE
-```
-
 ### `aave.ts` (V3) - Interactive CLI
 
 Interactive menu-driven interface for complete AAVE operations.
