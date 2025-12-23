@@ -131,13 +131,23 @@ async function main() {
     // );
 
     // Example 4: ob:usdc to USDC on Arbitrum
+    // await eip7702Swap(
+    //   'ob:usdc',
+    //   'eip155:42161/erc20:0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC on Arbitrum
+    //   parseUnits('1', 6).toString(),
+    //   6, // USDC has 6 decimals
+    //   50, // 0.5% slippage
+    //   'eip155:42161:0x46c0726a3a82ee887B2DfF336f05c760Ac6AeDcd', // Recipient account
+    // );
+
+    // Example 5: Swap from USDC on Ethereum to 1INCH on Base
     await eip7702Swap(
-      'ob:usdc',
-      'eip155:42161/erc20:0xaf88d065e77c8cC2239327C5EDb3A432268e5831', // USDC on Arbitrum
+      'eip155:1/erc20:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC on Ethereum
+      'eip155:8453/erc20:0xc5fecC3a29Fb57B5024eEc8a2239d4621e111CBE', // 1INCH on Base
       parseUnits('1', 6).toString(),
       6, // USDC has 6 decimals
       50, // 0.5% slippage
-      'eip155:42161:0x46c0726a3a82ee887B2DfF336f05c760Ac6AeDcd', // Recipient account
+      'eip155:8453:0xE8e8265a733984caA7d44426a3bEe5BAa945ed1d', // Recipient account
     );
   } catch (error) {
     console.error('Failed:', error);
