@@ -129,14 +129,24 @@ async function main() {
     // });
 
     // Example 7: Swap from Solana Mango to Base USDC
+    // await simpleSwap({
+    //   fromAssetId:
+    //     'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
+    //   toAssetId: 'eip155:8453/erc20:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+    //   amount: parseUnits('6', 6).toString(),
+    //   decimals: 6,
+    //   slippageTolerance: 100,
+    //   recipientAccount: 'eip155:8453:0xbb3b207d38E7dcEE4053535fdEA42D6b8D3477Da',
+    // });
+
+    // Example 8: Swap from USDC on Ethereum to 1INCH on Base
     await simpleSwap({
-      fromAssetId:
-        'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp/token:MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
-      toAssetId: 'eip155:8453/erc20:0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
-      amount: parseUnits('6', 6).toString(),
+      fromAssetId: 'eip155:1/erc20:0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      toAssetId: 'eip155:8453/erc20:0xc5fecC3a29Fb57B5024eEc8a2239d4621e111CBE',
+      amount: parseUnits('0.5', 6).toString(),
       decimals: 6,
       slippageTolerance: 100,
-      recipientAccount: 'eip155:8453:0xbb3b207d38E7dcEE4053535fdEA42D6b8D3477Da',
+      recipientAccount: 'eip155:8453:0xE8e8265a733984caA7d44426a3bEe5BAa945ed1d',
     });
   } catch (error) {
     console.error('Operation failed:', error);
