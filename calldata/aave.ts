@@ -1,6 +1,6 @@
 import { parseUnits, formatUnits, encodeFunctionData } from 'viem';
 import { AaveClient, chainId, evmAddress } from '@aave/client';
-import { userSupplies, userBorrows, userTransactionHistory } from '@aave/client/actions';
+import { userSupplies, userBorrows, userTransactionHistory, market } from '@aave/client/actions';
 import { AaveV3Arbitrum } from '@bgd-labs/aave-address-book';
 import * as readline from 'readline';
 import {
@@ -74,6 +74,7 @@ function displayMenu() {
   console.log('5. Borrow USDC');
   console.log('6. Withdraw USDC');
   console.log('7. Repay USDC');
+  console.log('8. View Market Data (APY, TVL, reserves)');
   console.log('0. Exit');
   console.log('='.repeat(60));
 }
@@ -307,6 +308,32 @@ async function queryTransactionHistory(userAddress: string) {
     logger.code('json', JSON.stringify(history, null, 2));
   } catch (error) {
     logger.error('Failed to query history:', (error as Error).message);
+  }
+}
+
+/**
+ * Query market data (reserves, APY, TVL)
+ */
+async function queryMarketData(userAddress?: string) {
+  logger.section('Market Data');
+
+  try {
+    const marketResult = await market(client, {
+      chainId: chainId(42161),
+      address: evmAddress(AAVE_POOL_ARBITRUM),
+      ...(userAddress && { user: evmAddress(userAddress) }),
+    });
+
+    if (marketResult.isErr()) {
+      logger.error('Failed to fetch market:', marketResult.error);
+      console.log(JSON.stringify(marketResult.error, null, 2));
+      return;
+    }
+
+    console.log(JSON.stringify(marketResult.value, null, 2));
+    logger.code('json', JSON.stringify(marketResult.value, null, 2));
+  } catch (error) {
+    logger.error('Failed to query market:', (error as Error).message);
   }
 }
 
@@ -765,6 +792,10 @@ async function main() {
             }
             break;
 
+          case '8': // Market Data
+            await queryMarketData(ctx.evmAccount.accountAddress);
+            break;
+
           case '0': // Exit
             console.log('\n👋 Goodbye!');
             logger.log('\n👋 Exiting...');
@@ -772,7 +803,7 @@ async function main() {
             break;
 
           default:
-            console.log('❌ Invalid option. Please select 0-7.');
+            console.log('❌ Invalid option. Please select 0-8.');
         }
       } catch (error) {
         console.error('\n❌ Operation failed:', (error as Error).message);
