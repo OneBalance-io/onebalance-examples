@@ -64,7 +64,11 @@ function calculateNonDestinationBalance(
     if (!isDestination) {
       // Normalize to target decimals before adding
       const decimalDiff = targetDecimals - nativeDecimals;
-      const normalizedAmount = amount * 10n ** BigInt(decimalDiff);
+      // Handle both scaling up (positive diff) and scaling down (negative diff)
+      const normalizedAmount =
+        decimalDiff >= 0
+          ? amount * 10n ** BigInt(decimalDiff)
+          : amount / 10n ** BigInt(-decimalDiff);
       nonDestinationBalance += normalizedAmount;
     }
   }
@@ -221,20 +225,20 @@ async function consolidateStablecoin(
 async function main() {
   try {
     // Example 1: Public API (6 decimals)
-    // await consolidateStablecoin(
-    //   'ob:usdc',
-    //   `${BSC_CHAIN}/erc20:${BSC_USDC}`,
-    //   parseUnits('1', 6).toString(),
-    //   6,
-    // );
-
-    // Example 2: Team API (18 decimals)
     await consolidateStablecoin(
       'ob:usdc',
       `${ARBITRUM_CHAIN}/erc20:${ARBITRUM_USDC}`,
-      parseUnits('3', 18).toString(),
-      18,
+      parseUnits('1.3', 6).toString(),
+      6,
     );
+
+    // Example 2: Team API (18 decimals)
+    // await consolidateStablecoin(
+    //   'ob:usdc',
+    //   `${ARBITRUM_CHAIN}/erc20:${ARBITRUM_USDC}`,
+    //   parseUnits('3', 18).toString(),
+    //   18,
+    // );
   } catch (error) {
     console.error('Failed:', error);
     process.exit(1);

@@ -20,10 +20,15 @@ import {
   type Hex,
   type TargetCallQuoteV3,
   CallType,
+  type EvmAccountType,
 } from '../helpers';
 
 /**
- * Smart Hyperliquid Deposit with EIP-7702 Account
+ * Smart Hyperliquid Deposit with Switchable Account Types
+ *
+ * Supports two account types:
+ *   - EIP-7702 (kernel-v3.3-ecdsa): EOA is the account address
+ *   - Standard (kernel-v3.1-ecdsa): Uses predictStandardAddress to derive account
  *
  * Automatically detects fund distribution and routes to optimal flow:
  *
@@ -43,6 +48,13 @@ import {
 const ARBITRUM_CHAIN = 'eip155:42161';
 const ARBITRUM_USDC = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
 const HYPERLIQUID_BRIDGE = '0x2Df1c51E09aECF9cacB7bc98cB1742757f163dF7';
+
+// Helper to get the correct ContractAccountType for signing based on EVM account type
+function getContractAccountType(evmAccountType: EvmAccountType): ContractAccountType {
+  return evmAccountType === 'eip7702'
+    ? ContractAccountType.KernelV33
+    : ContractAccountType.KernelV31;
+}
 
 // Get native decimals for a specific chain's USDC
 function getNativeDecimals(chainId: string): number {
@@ -66,11 +78,16 @@ function calculateNonDestinationBalance(
     if (!isDestination) {
       // Normalize to target decimals before adding
       const decimalDiff = targetDecimals - nativeDecimals;
-      const normalizedAmount = amount * 10n ** BigInt(decimalDiff);
+      // Handle both scaling up (positive diff) and scaling down (negative diff)
+      const normalizedAmount =
+        decimalDiff >= 0
+          ? amount * 10n ** BigInt(decimalDiff)
+          : amount / 10n ** BigInt(-decimalDiff);
       nonDestinationBalance += normalizedAmount;
     }
   }
 
+  console.log({ nonDestinationBalance });
   return nonDestinationBalance;
 }
 
@@ -94,14 +111,17 @@ async function executeCallQuote(
   solanaKeypair: any,
   solanaAccount: any,
   flowType: 'atomic' | 'two-step',
+  evmAccountType: EvmAccountType,
 ) {
+  const contractAccountType = getContractAccountType(evmAccountType);
+
   console.log('\n📋 Signing origin chain operations...');
   const signedQuote = await signAllOperations(
     quote,
     signerKey,
     solanaKeypair,
     solanaAccount,
-    ContractAccountType.KernelV33,
+    contractAccountType,
   );
   console.log('✅ All operations signed\n');
 
@@ -131,8 +151,11 @@ async function depositAtomic(
   amount: string,
   decimals: number,
   slippageTolerance: number,
+  evmAccountType: EvmAccountType,
 ) {
   console.log('\n💡 Using ATOMIC flow (single-input detected)\n');
+
+  const contractAccountType = getContractAccountType(evmAccountType);
 
   // Convert amount from aggregated decimals to native token decimals
   const nativeDecimals = 6; // Arbitrum USDC has 6 decimals
@@ -179,7 +202,7 @@ async function depositAtomic(
   const signedChainOp = await signOperation(
     preparedQuote.chainOperation,
     signerKey.privateKey,
-    ContractAccountType.KernelV33,
+    contractAccountType,
   );
   console.log('✅ Target chain operation signed\n');
 
@@ -198,7 +221,14 @@ async function depositAtomic(
   console.log('\n✅ Call quote response:', JSON.stringify(quote, null, 2));
 
   // Execute call quote
-  const result = await executeCallQuote(quote, signerKey, solanaKeypair, solanaAccount, 'atomic');
+  const result = await executeCallQuote(
+    quote,
+    signerKey,
+    solanaKeypair,
+    solanaAccount,
+    'atomic',
+    evmAccountType,
+  );
 
   console.log('\n✅ Atomic deposit completed!');
   return { success: true, flow: 'atomic', result };
@@ -214,9 +244,12 @@ async function depositTwoStep(
   amount: string,
   decimals: number,
   slippageTolerance: number,
+  evmAccountType: EvmAccountType,
 ) {
   console.log('\n💡 Using TWO-STEP flow (multi-input detected)\n');
   console.log('📊 STEP 1: Consolidating funds to Arbitrum...');
+
+  const contractAccountType = getContractAccountType(evmAccountType);
 
   // Fetch balance
   const accountParam = buildAccountParam(evmAccount, solanaAccount);
@@ -292,8 +325,16 @@ async function depositTwoStep(
   console.log(`  - From: ${swapQuote.originToken?.aggregatedAssetId || 'unknown'}`);
   console.log(`  - To: ${swapQuote.destinationToken?.assetType || 'unknown'}`);
 
-  // Get actual output amount from swap (in native decimals - 6 for Arbitrum USDC)
+  // Get actual input/output amounts from swap (in native decimals - 6 for USDC)
+  // Note: originToken.fiatValue contains the actual amounts pulled per chain
   const swapOutputAmount = swapQuote.destinationToken?.amount || '0';
+  const swapInputAmounts = swapQuote.originToken?.fiatValue as
+    | Array<{ assetType: string; fiatValue: string; amount?: string }>
+    | undefined;
+  const actualSwapInput = Array.isArray(swapInputAmounts)
+    ? swapInputAmounts.reduce((sum, v) => sum + BigInt(v.amount || '0'), 0n)
+    : 0n;
+  console.log(`  - Amount in: ${formatUnits(actualSwapInput, 6)} USDC`);
   console.log(`  - Amount out: ${formatUnits(BigInt(swapOutputAmount), 6)} USDC`);
 
   // Sign swap operations
@@ -303,7 +344,7 @@ async function depositTwoStep(
     signerKey,
     solanaKeypair,
     solanaAccount,
-    ContractAccountType.KernelV33,
+    contractAccountType,
   );
 
   console.log('⚡ Executing swap...');
@@ -388,7 +429,7 @@ async function depositTwoStep(
   const signedChainOp = await signOperation(
     preparedQuote.chainOperation,
     signerKey.privateKey,
-    ContractAccountType.KernelV33,
+    contractAccountType,
   );
   console.log('✅ Target chain operation signed\n');
 
@@ -421,15 +462,17 @@ async function depositTwoStep(
     solanaKeypair,
     solanaAccount,
     'two-step',
+    evmAccountType,
   );
 
   console.log('\n🎉 Two-step deposit completed!');
   console.log(`\n💡 Summary:`);
+  console.log(`   1. Requested consolidation: ${formatUnits(amountToConsolidate, decimals)} USDC`);
   console.log(
-    `   1. Consolidated ${formatUnits(amountToConsolidate, decimals)} USDC from other chains → got ${formatUnits(BigInt(swapOutputAmount), 6)} USDC`,
+    `   2. Actually pulled: ${formatUnits(actualSwapInput, 6)} USDC → received ${formatUnits(BigInt(swapOutputAmount), 6)} USDC`,
   );
   console.log(
-    `   2. Deposited ${formatUnits(BigInt(depositAmount), 6)} USDC to Hyperliquid bridge`,
+    `   3. Deposited ${formatUnits(BigInt(depositAmount), 6)} USDC to Hyperliquid bridge`,
   );
   console.log(`   Sender: ${evmAccount?.accountAddress}`);
   console.log(`   Bridge: ${HYPERLIQUID_BRIDGE}\n`);
@@ -442,17 +485,19 @@ async function depositToHyperLiquid(
   amount: string,
   decimals: number,
   slippageTolerance: number = 50,
+  evmAccountType: EvmAccountType = 'eip7702',
 ) {
   try {
-    console.log('🚀 Starting smart Hyperliquid deposit...\n');
+    const accountTypeLabel = evmAccountType === 'eip7702' ? 'EIP-7702' : 'Standard';
+    console.log(`🚀 Starting smart Hyperliquid deposit with ${accountTypeLabel} account...\n`);
 
-    // Load EIP-7702 + Solana accounts (ob:usdc can include Solana USDC)
+    // Load accounts based on selected type
     const { accounts, evmAccount, signerKey, solanaKeypair, solanaAccount } =
       await loadMultiChainAccounts({
         needsEvm: true,
         needsSolana: true, // Set to false to test EVM-only
-        sessionKeyName: 'session4',
-        evmAccountType: 'eip7702',
+        sessionKeyName: 'session2',
+        evmAccountType,
       });
 
     if (!evmAccount || !signerKey) {
@@ -505,6 +550,7 @@ async function depositToHyperLiquid(
     const callType = testPrepare.callType || 'unknown';
 
     console.log(`\n📊 Detection results:`);
+    console.log(`  - Account type: ${accountTypeLabel}`);
     console.log(`  - Call type: ${callType}`);
     console.log(`  - Source chains: ${sourceChains}`);
     console.log(`  - Flow: ${needsTwoStep ? 'TWO-STEP' : 'ATOMIC'}\n`);
@@ -521,6 +567,7 @@ async function depositToHyperLiquid(
         amount,
         decimals,
         slippageTolerance,
+        evmAccountType,
       );
     } else {
       console.log('✓ Single-input scenario detected');
@@ -534,6 +581,7 @@ async function depositToHyperLiquid(
         amount,
         decimals,
         slippageTolerance,
+        evmAccountType,
       );
     }
   } catch (error) {
@@ -545,14 +593,23 @@ async function depositToHyperLiquid(
 // Main - Smart Hyperliquid deposit
 async function main() {
   try {
+    // ========================================
+    // ACCOUNT TYPE SWITCH
+    // ========================================
+    // Choose which account type to use:
+    // - 'eip7702': EIP-7702 account (kernel-v3.3-ecdsa) - EOA is the account address
+    // - 'standard': Standard account (kernel-v3.1-ecdsa) - uses predictStandardAddress
+    const ACCOUNT_TYPE: EvmAccountType = 'standard';
+
     // Deposit USDC to Hyperliquid bridge
     // Automatically detects single-input vs multi-input scenario
     // and chooses optimal flow (atomic vs two-step)
 
     await depositToHyperLiquid(
-      parseUnits('1.5', 18).toString(), // 1.5 USDC
-      18, // Balance decimals
-      50,
+      parseUnits('3', 6).toString(), // 1.5 USDC
+      6, // Balance decimals
+      50, // Slippage tolerance
+      ACCOUNT_TYPE,
     );
   } catch (error) {
     console.error('Failed:', error);
