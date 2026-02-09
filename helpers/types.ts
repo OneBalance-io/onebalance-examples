@@ -372,6 +372,13 @@ export interface CallRequestV3 {
   tamperProofSignature: string;
   fromAggregatedAssetId?: string;
   fromAssetId?: string;
+  callType?: string;
+  sourceAssetBalances?: Array<{
+    assetType: string;
+    balance: string;
+    decimals: number;
+    fiatValue: number;
+  }>;
   slippageTolerance?: number;
 }
 

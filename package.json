@@ -9,6 +9,8 @@
     "calldata:euler-vault-v1": "ts-node calldata/euler-vault-v1.ts",
     "calldata:euler-vault-v3": "ts-node calldata/euler-vault-v3.ts",
     "calldata:depositToHyperLiquid": "ts-node calldata/depositToHyperLiquid.ts",
+    "calldata:aave": "ts-node calldata/aave.ts",
+    "scripts:aave": "ts-node scripts/aave.ts",
     "eip-7702": "ts-node eip-7702/index.ts",
     "eip-7702:consolidate-usd": "ts-node eip-7702/consolidate-usd.ts",
     "eip-7702:solana-transfer-to-polygon": "ts-node eip-7702/solana-transfer-to-polygon.ts",
@@ -34,6 +36,8 @@
   "license": "ISC",
   "packageManager": "pnpm@10.17.1",
   "dependencies": {
+    "@aave/client": "^0.9.0",
+    "@bgd-labs/aave-address-book": "^4.37.2",
     "@solana/web3.js": "^1.98.4",
     "axios": "^1.12.2",
     "bs58": "^6.0.0",

@@ -77,6 +77,53 @@ Smart Hyperliquid bridge deposit with automatic flow detection and destination b
 pnpm run calldata:depositToHyperLiquid
 ```
 
+### `aave.ts` (V3) - Interactive CLI
+
+Interactive menu-driven interface for complete AAVE operations.
+
+**Menu Options:**
+1. Show USDC Balance (multi-chain breakdown)
+2. List Positions (supplies & borrows)
+3. View Transaction History
+4. Supply USDC (prompts for amount)
+5. Borrow USDC (prompts for amount)
+6. Withdraw USDC (prompts for amount)
+7. Repay USDC (prompts for amount)
+0. Exit
+
+**Features:**
+- Interactive menu selection (no command-line args needed)
+- Loads account once, reuses for all operations
+- Multi-chain consolidation for supply/repay
+- Smart validation (checks positions before operations)
+- AAVE SDK queries (balance, positions, history)
+- Full JSON logging for debugging
+- Transaction monitoring
+- Error handling that doesn't crash the loop
+- While loop - stays open until you exit
+
+**Usage:**
+```bash
+# Run interactive CLI
+pnpm run calldata:aave
+
+# Then select from menu:
+# - Enter 1 to see multi-chain USDC balance
+# - Enter 2 to see positions
+# - Enter 3 to see transaction history
+# - Enter 4 to supply (will prompt for amount, supports multi-chain)
+# - Enter 5 to borrow (will prompt for amount, requires collateral)
+# - Enter 6 to withdraw (will prompt for amount)
+# - Enter 7 to repay (will prompt for amount, supports multi-chain)
+# - Enter 0 to exit
+```
+
+**Smart validations:**
+- Withdraw: checks if you have USDC supply first
+- Repay: checks if you have USDC debt first
+- Supply/Repay: supports cross-chain consolidation
+- Borrow/Withdraw: same-chain operations
+
 ## Key Differences: V1 vs V3
 
 | Feature | V1 | V3 |

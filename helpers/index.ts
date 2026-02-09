@@ -81,5 +81,8 @@ export {
 // Display helpers
 export { displaySwapQuote, displayTransferQuote } from './display';
 
+// Logger helpers
+export { Logger, createLogger } from './logger';
+
 // Types
 export * from './types';
