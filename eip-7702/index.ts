@@ -28,7 +28,7 @@ async function transferErc20WithEIP7702(
   console.log('Starting 1 USDC transfer...');
 
   const largestUsdcBalanceEntry = usdcBalances.individualAssetBalances.reduce((max, current) => {
-    return Number(current.balance) > Number(max.balance) ? current : max;
+    return BigInt(current.balance) > BigInt(max.balance) ? current : max;
   });
 
   const chain = 'eip155:42161'; // Arbitrum
