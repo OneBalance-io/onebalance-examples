@@ -45,7 +45,7 @@ async function transferErc20OnChain(account: RoleBasedAccount, recipientAddress:
   console.log('✅ USDC Balances:', usdcBalances);
 
   const largestUsdcBalanceEntry = usdcBalances.individualAssetBalances.reduce((max, current) => {
-    return Number(current.balance) > Number(max.balance) ? current : max;
+    return BigInt(current.balance) > BigInt(max.balance) ? current : max;
   });
 
   if (largestUsdcBalanceEntry.balance === '0') {
